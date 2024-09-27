@@ -7,10 +7,9 @@ on:
 
 jobs:
   build-and-deploy:
-    runs-on: self-hosted
+    runs-on: self-hosted/trusted-agent
 
-    # Target only the trusted agent by its label
-    labels: trusted-agent
+    
 
     steps:
       # Step 1: Verify if the runner is trusted
