@@ -3,7 +3,7 @@ name: Hello World Pipeline
 on:
   push:
     branches:
-      - main
+      #- main
 
 jobs:
   hello-world-job:
