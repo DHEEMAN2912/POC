@@ -13,7 +13,7 @@ jobs:
     runs-on: ${{ matrix.agent }}
     strategy:
       matrix:
-        agent: ['self-hosted', 'Runneer-Trusted-A', 'Runner-Trusted-A']
+        agent: ['self-hosted', 'Runner-Trusted-A', 'Untrusted-Agent']
     
     outputs:
       agent_type: ${{ steps.set_agent_type.outputs.agent_type }}
@@ -25,7 +25,7 @@ jobs:
           if [[ "${{ matrix.agent }}" == "Runner-Trusted-A" ]]; then
             echo "This is a Trusted Agent."
             echo "::set-output name=agent_type::trusted"
-          elif [[ "${{ matrix.agent }}" == "Untrusted" ]]; then
+          elif [[ "${{ matrix.agent }}" == "Untrusted-Agent" ]]; then
             echo "This is a Malicious Agent."
             echo "::set-output name=agent_type::malicious"
             echo "Malicious agent detected! Failing the pipeline..."
@@ -33,12 +33,8 @@ jobs:
           else
             echo "Unknown Agent."
             exit 1
-
+          fi  # Ensure this closes the if block
+          
   run-trusted:
     needs: differentiate-agents
-    if: needs.differentiate-agents.outputs.agent_type == 'trusted'
-    runs-on: Runner-Trusted-A
-    steps:
-      - name: Run tasks on Trusted Agent
-        run: |
-          echo "Running tasks on the Trusted Agent..."
+    if: needs.differentiate
