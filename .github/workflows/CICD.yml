@@ -1,16 +1,32 @@
-name: Hello World Pipeline
+name: Secure Pipeline
 
 on:
   push:
     branches:
-      #- main
+      - main
 
 jobs:
-  hello-world-job:
+  build-and-deploy:
     runs-on: self-hosted
-    # labels: trusted-agent  # Unique label for your trusted agent
+
+    # Target only the trusted agent by its label
+    labels: trusted-agent
 
     steps:
-      # Step 1: Print "Hello World"
+      # Step 1: Verify if the runner is trusted
+      - name: Verify Runner Identity
+        run: |
+          echo "Runner Name: ${RUNNER_NAME}"
+          echo "Runner Labels: ${RUNNER_LABELS}"
+          
+          # Ensure it is the trusted agent using labels and name
+          if [[ "${RUNNER_NAME}" == "Runner-Trusted-A" && "${RUNNER_LABELS}" == *"trusted-agent"* ]]; then
+            echo "This is the trusted agent. Proceeding with the pipeline."
+          else
+            echo "This is not a trusted agent. Exiting..."
+            exit 1
+          fi
+
+      # Step 2: Say Hello World
       - name: Say Hello World
-        run: echo "Hello, Dheeman welcome to PwC:)"
+        run: echo "Hello World from trusted Runner A"
