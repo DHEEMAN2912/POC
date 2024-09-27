@@ -14,8 +14,8 @@
 #         run: echo "Hello World from Runner-Trusted-A"
 
 
-
-   name: Runner Verification Pipeline
+          
+name: Runner Verification Pipeline
 
 on:
   push:
@@ -45,3 +45,4 @@ jobs:
             echo "This is not a trusted agent. Exiting..."
             exit 1
           fi
+
