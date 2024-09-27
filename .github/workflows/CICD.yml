@@ -7,9 +7,10 @@ on:
 
 jobs:
   echo-job:
-    runs-on: self-hosted  # Specify it should run on a self-hosted runner
-    # Use the specific label in the runs-on line
-    runs-on: [self-hosted, trusted-agent] 
+    runs-on: self-hosted  # This specifies that it should run on a self-hosted runner
+    # Use both the self-hosted and trusted-agent labels together
+    
+    if: contains(runner.labels, 'trusted-agent')
 
     steps:
       - name: Echo Hello World
