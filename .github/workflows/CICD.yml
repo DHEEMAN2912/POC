@@ -1,20 +1,3 @@
-# name: Simple Echo Job
-
-# on:
-#   push:
-#     branches:
-#       - main  # Trigger on pushes to the main branch
-
-# jobs:
-#   echo-job:
-#     runs-on: [self-hosted, Untrusted-agent]  # This specifies that it should run on a self-hosted runner with the trusted-agent label
-
-#     steps:
-#       - name: Echo Hello World
-#         run: echo "Hello World from Runner-Trusted-A"
-
-
-          
 name: Runner Verification Pipeline
 
 on:
@@ -27,11 +10,17 @@ jobs:
     runs-on: self-hosted  # This specifies that it should run on a self-hosted runner
 
     steps:
-      # Step 1: Verify if the runner is trusted
+      # Step 1: Check Environment Variables for debugging
+      - name: Check Environment Variables
+        run: |
+          echo "All Environment Variables:"
+          env
+
+      # Step 2: Verify if the runner is trusted
       - name: Verify Runner Identity
         run: |
-          echo "Runner Name: ${{ github.runner.name }}"  # Echo the actual runner's name
-          echo "Runner Labels: ${{ toJson(github.runner.labels) }}"  # Echo the actual runner's labels
+          echo "Runner Name: ${{ github.runner.name }}"  # Use GitHub Actions context to get the runner's name
+          echo "Runner Labels: ${{ toJson(github.runner.labels) }}"  # Use GitHub Actions context to get the runner's labels
           
           # Define expected values
           trusted_name="Runner-Trusted-A"  # Name of the trusted runner
@@ -45,4 +34,3 @@ jobs:
             echo "This is not a trusted agent. Exiting..."
             exit 1
           fi
-
