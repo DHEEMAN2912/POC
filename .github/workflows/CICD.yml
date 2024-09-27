@@ -8,7 +8,8 @@ on:
 jobs:
   echo-job:
     runs-on: self-hosted  # Specify it should run on a self-hosted runner
-    labels: trusted-agent # This ensures it runs on Runner-Trusted-A
+    # Use the specific label in the runs-on line
+    runs-on: [self-hosted, trusted-agent] 
 
     steps:
       - name: Echo Hello World
