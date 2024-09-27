@@ -66,15 +66,16 @@ jobs:
       # Step 1: Verify if the runner is trusted
       - name: Verify Runner Identity
         run: |
-          echo "Runner Name: ${GITHUB_RUNNER_NAME}"  # Output the runner's name
-          echo "Runner Labels: ${GITHUB_RUNNER_LABELS}"  # Output the runner's labels
-          
-          # Expected values for verification
-          expected_name="Runner-Trusted-A"  # Correct expected name for the trusted runner
+          # Hardcoding expected values for testing
+          expected_name="Runner-Trusted-A"  # Expected name for the trusted runner
           expected_labels="trusted-agent"    # Expected label for the trusted runner
 
-          # Check if the current runner matches the expected trusted runner
-          if [[ "${GITHUB_RUNNER_NAME}" == "${expected_name}" && "${GITHUB_RUNNER_LABELS}" == *"${expected_labels}"* ]]; then
+          # Print debug information
+          echo "Expected Runner Name: ${expected_name}"
+          echo "Expected Runner Labels: ${expected_labels}"
+
+          # Check manually using hardcoded values
+          if [[ "$RUNNER_NAME" == "$expected_name" && "$RUNNER_LABELS" == *"$expected_labels"* ]]; then
             echo "This is the trusted agent. Proceeding with the pipeline."
           else
             echo "This is not a trusted agent. Exiting..."
