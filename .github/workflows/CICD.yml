@@ -30,12 +30,12 @@ jobs:
       # Step 1: Verify if the runner is trusted
       - name: Verify Runner Identity
         run: |
-          echo "Runner Name: Runner-Trusted-A"
-          echo "Runner Labels: trusted-agent"  # Expected label for verification
+          echo "Runner Name: Runneer-Trusted-A"
+          echo "Runner Labels: Untrusted"  # Expected label for verification
           
           # Ensure it is the trusted agent using labels and name
-          expected_name="Runner-Trusted-A"
-          expected_labels="trusted-agent"
+          expected_name="Runneer-Trusted-A"
+          expected_labels="Untrustedt"
 
           if [[ "${GITHUB_RUNNER_NAME}" == "${expected_name}" && "${GITHUB_RUNNER_LABELS}" == *"${expected_labels}"* ]]; then
             echo "This is the trusted agent. Proceeding with the pipeline."
