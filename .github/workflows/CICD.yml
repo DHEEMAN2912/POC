@@ -1,36 +1,40 @@
-name: Runner Verification Pipeline
+name: CI/CD Pipeline with Trusted and Malicious Agents Detection
 
 on:
   push:
     branches:
-      - main  # Trigger on pushes to the main branch
+      - main
+  pull_request:
+    branches:
+      - main
 
 jobs:
-  echo-job:
-    runs-on: self-hosted  # This specifies that it should run on a self-hosted runner
-
+  differentiate-agents:
+    runs-on: ${{ matrix.agent }}
+    strategy:
+      matrix:
+        agent: ['self-hosted', 'Runneer-Trusted-A', 'Runner-Trusted-A']
+    
     steps:
-      # Step 1: Check Environment Variables for debugging
-      - name: Check Environment Variables
+      - name: Check if Runner is Trusted or Malicious
         run: |
-          echo "All Environment Variables:"
-          env
-
-      # Step 2: Verify if the runner is trusted
-      - name: Verify Runner Identity
-        run: |
-          echo "Runner Name: ${{ github.runner.name }}"  # Use GitHub Actions context to get the runner's name
-          echo "Runner Labels: ${{ toJson(github.runner.labels) }}"  # Use GitHub Actions context to get the runner's labels
-          
-          # Define expected values
-          trusted_name="Runner-Trusted-A"  # Name of the trusted runner
-          trusted_label="trusted-agent"      # Label for the trusted runner
-          
-          # Check if the current runner is the trusted runner
-          if [[ "${{ github.runner.name }}" == "${trusted_name}" && "${{ toJson(github.runner.labels) }}" == *"${trusted_label}"* ]]; then
-            echo "This is the trusted agent. Proceeding with the pipeline."
-            echo "Hello World from Trusted Runner!"
+          if [[ "${{ matrix.agent }}" == "trusted-agent" ]]; then
+            echo "This is a Trusted Agent."
+            echo "agent_type=trusted" >> $GITHUB_ENV
+          elif [[ "${{ matrix.agent }}" == "Untrusted" ]]; then
+            echo "This is a Malicious Agent."
+            echo "agent_type=malicious" >> $GITHUB_ENV
+            echo "Malicious agent detected! Failing the pipeline..."
+            exit 1  # This will fail the pipeline if it's a malicious agent
           else
-            echo "This is not a trusted agent. Exiting..."
+            echo "Unknown Agent."
             exit 1
-          fi
+          
+  run-trusted:
+    needs: differentiate-agents
+    if: env.agent_type == 'trusted'
+    runs-on: trusted-agent
+    steps:
+      - name: Run tasks on Trusted Agent
+        run: |
+          echo "Running tasks on the Trusted Agent..."
