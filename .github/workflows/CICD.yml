@@ -30,8 +30,8 @@ jobs:
       # Step 1: Verify if the runner is trusted
       - name: Verify Runner Identity
         run: |
-          echo "Runner Name: Runneer-Trusted-A"
-          echo "Runner Labels: Untrusted"  # Expected label for verification
+          echo "Runner Name: Runner-Trusted-A"
+          echo "Runner Labels: trusted-agent"  # Expected label for verification
           
           # Ensure it is the trusted agent using labels and name
           expected_name="Runneer-Trusted-A"
