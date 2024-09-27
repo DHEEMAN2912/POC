@@ -15,25 +15,29 @@ jobs:
       matrix:
         agent: ['self-hosted', 'Runneer-Trusted-A', 'Runner-Trusted-A']
     
+    outputs:
+      agent_type: ${{ steps.set_agent_type.outputs.agent_type }}
+
     steps:
       - name: Check if Runner is Trusted or Malicious
+        id: set_agent_type  # Set an ID to refer to the outputs
         run: |
-          if [[ "${{ matrix.agent }}" == "trusted-agent" ]]; then
+          if [[ "${{ matrix.agent }}" == "Runner-Trusted-A" ]]; then
             echo "This is a Trusted Agent."
-            echo "agent_type=trusted" >> $GITHUB_ENV
+            echo "::set-output name=agent_type::trusted"
           elif [[ "${{ matrix.agent }}" == "Untrusted" ]]; then
             echo "This is a Malicious Agent."
-            echo "agent_type=malicious" >> $GITHUB_ENV
+            echo "::set-output name=agent_type::malicious"
             echo "Malicious agent detected! Failing the pipeline..."
             exit 1  # This will fail the pipeline if it's a malicious agent
           else
             echo "Unknown Agent."
             exit 1
-          
+
   run-trusted:
     needs: differentiate-agents
-    if: env.agent_type == 'trusted'
-    runs-on: trusted-agent
+    if: needs.differentiate-agents.outputs.agent_type == 'trusted'
+    runs-on: Runner-Trusted-A
     steps:
       - name: Run tasks on Trusted Agent
         run: |
