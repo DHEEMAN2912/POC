@@ -1,16 +1,15 @@
-name: Secure Pipelinee
+name: Simple Echo Job
 
 on:
   push:
     branches:
-      - main
+      - main  # You can change this to any branch you want
 
 jobs:
-  build-and-deploy:
-    runs-on: self-hosted/trusted-agent
-
-  
+  echo-job:
+    runs-on: self-hosted  # Specify it should run on a self-hosted runner
+    labels: trusted-agent # This ensures it runs on Runner-Trusted-A
 
     steps:
-      - name: Say Hello World
-        run: echo "Hello World from trusted Runner-Trusted-A"
+      - name: Echo Hello World
+        run: echo "Hello World from Runner-Trusted-A"
