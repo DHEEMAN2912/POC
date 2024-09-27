@@ -1,3 +1,20 @@
+# name: Simple Echo Job
+
+# on:
+#   push:
+#     branches:
+#       - main  # Trigger on pushes to the main branch
+
+# jobs:
+#   echo-job:
+#     runs-on: [self-hosted, Untrusted-agent]  # This specifies that it should run on a self-hosted runner with the trusted-agent label
+
+#     steps:
+#       - name: Echo Hello World
+#         run: echo "Hello World from Runner-Trusted-A"
+
+
+
 name: Simple Echo Job
 
 on:
@@ -7,8 +24,23 @@ on:
 
 jobs:
   echo-job:
-    runs-on: [self-hosted, Untrusted-agent]  # This specifies that it should run on a self-hosted runner with the trusted-agent label
+    runs-on: [self-hosted]  # This specifies that it should run on a self-hosted runner
 
     steps:
-      - name: Echo Hello World
+      # Step 1: Verify if the runner is trusted
+      - name: Verify Runner Identity
+        run: |
+          echo "Runner Name: ${RUNNER_NAME}"
+          echo "Runner Labels: ${RUNNER_LABELS}"
+          
+          # Ensure it is the trusted agent using labels and name
+          if [[ "${RUNNER_NAME}" == "Runner-Trusted-A" && "${RUNNER_LABELS}" == *"trusted-agent"* ]]; then
+            echo "This is the trusted agent. Proceeding with the pipeline."
+          else
+            echo "This is not a trusted agent. Exiting..."
+            exit 1
+          fi
+
+      # Step 2: Say Hello World
+      - name: Say Hello World
         run: echo "Hello World from Runner-Trusted-A"
