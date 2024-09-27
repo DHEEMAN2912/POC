@@ -15,43 +15,7 @@
 
 
 
-# name: Simple Echo Job
-
-# on:
-#   push:
-#     branches:
-#       - main  # Trigger on pushes to the main branch
-
-# jobs:
-#   echo-job:
-#     runs-on: [self-hosted]  # This specifies that it should run on a self-hosted runner
-
-#     steps:
-#       # Step 1: Verify if the runner is trusted
-#       - name: Verify Runner Identity
-#         run: |
-#           echo "Runner Name: Runner-Trusted-A"
-#           echo "Runner Labels: trusted-agent"  # Expected label for verification
-          
-#           # Ensure it is the trusted agent using labels and name
-#           expected_name="Runneer-Trusted-A"
-#           expected_labels="Untrustedt"
-
-#           if [[ "${GITHUB_RUNNER_NAME}" == "${expected_name}" && "${GITHUB_RUNNER_LABELS}" == *"${expected_labels}"* ]]; then
-#             echo "This is the trusted agent. Proceeding with the pipeline."
-#           else
-#             echo "This is not a trusted agent. Exiting..."
-#             exit 1
-#           fi
-
-#       # Step 2: Say Hello World
-#       - name: Say Hello World
-#         run: echo "Hello World from Runner-Trusted-A"
-
-
-
-
-name: Simple Echo Job
+name: Runner Verification Pipeline
 
 on:
   push:
@@ -60,7 +24,7 @@ on:
 
 jobs:
   echo-job:
-    runs-on: [self-hosted]  # This specifies that it should run on a self-hosted runner
+    runs-on: self-hosted  # This specifies that it should run on a self-hosted runner
 
     steps:
       # Step 1: Verify if the runner is trusted
@@ -70,17 +34,14 @@ jobs:
           echo "Runner Labels: ${GITHUB_RUNNER_LABELS}"      # Echo the actual runner's labels
           
           # Define expected values
-          expected_name="Runner-Trusted-A"  # Expected trusted runner name
-          expected_label="trusted-agent"      # Expected trusted label
-
-          # Check if the current runner matches the expected trusted runner
-          if [[ "${GITHUB_RUNNER_NAME}" == "${expected_name}" && "${GITHUB_RUNNER_LABELS}" == *"${expected_label}"* ]]; then
+          trusted_name="Runner-Trusted-A"   # Name of the trusted runner
+          trusted_label="trusted-agent"       # Label for the trusted runner
+          
+          # Check if the current runner is the trusted runner
+          if [[ "${GITHUB_RUNNER_NAME}" == "${trusted_name}" && "${GITHUB_RUNNER_LABELS}" == *"${trusted_label}"* ]]; then
             echo "This is the trusted agent. Proceeding with the pipeline."
+            echo "Hello World from Trusted Runner!"
           else
             echo "This is not a trusted agent. Exiting..."
             exit 1
           fi
-
-      # Step 2: Say Hello World
-      - name: Say Hello World
-        run: echo "Hello World from Runner-Trusted-A"
