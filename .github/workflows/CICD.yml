@@ -3,14 +3,11 @@ name: Simple Echo Job
 on:
   push:
     branches:
-      - main  # You can change this to any branch you want
+      - main  # Trigger on pushes to the main branch
 
 jobs:
   echo-job:
-    runs-on: self-hosted  # This specifies that it should run on a self-hosted runner
-    # Use both the self-hosted and trusted-agent labels together
-    
-    if: contains(runner.labels, 'trusted-agent')
+    runs-on: [self-hosted, trusted-agent]  # This specifies that it should run on a self-hosted runner with the trusted-agent label
 
     steps:
       - name: Echo Hello World
