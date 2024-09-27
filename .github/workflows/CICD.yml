@@ -34,7 +34,12 @@ jobs:
             echo "Unknown Agent."
             exit 1
           fi  # Ensure this closes the if block
-          
+
   run-trusted:
     needs: differentiate-agents
-    if: needs.differentiate
+    if: needs.differentiate-agents.outputs.agent_type == 'trusted'
+    runs-on: Runner-Trusted-A
+    steps:
+      - name: Run tasks on Trusted Agent
+        run: |
+          echo "Running tasks on the Trusted Agent..."
