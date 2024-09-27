@@ -1,4 +1,4 @@
-name: Secure Pipelinee
+name: Secure Pipeline
 
 on:
   push:
