@@ -7,9 +7,7 @@ on:
 
 jobs:
   build-and-deploy:
-    runs-on: self-hosted/Runner-Malicious-A
-
-    
+    runs-on: self-hosted/trusted-agent
 
     steps:
       # Step 1: Verify if the runner is trusted
@@ -17,7 +15,7 @@ jobs:
         run: |
           echo "Runner Name: ${RUNNER_NAME}"
           echo "Runner Labels: ${RUNNER_LABELS}"
-          
+
           # Ensure it is the trusted agent using labels and name
           if [[ "${RUNNER_NAME}" == "Runner-Trusted-A" && "${RUNNER_LABELS}" == *"trusted-agent"* ]]; then
             echo "This is the trusted agent. Proceeding with the pipeline."
