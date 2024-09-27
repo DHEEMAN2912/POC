@@ -30,15 +30,15 @@ jobs:
       # Step 1: Verify if the runner is trusted
       - name: Verify Runner Identity
         run: |
-          echo "Runner Name: ${GITHUB_RUNNER_NAME}"          # Echo the actual runner's name
-          echo "Runner Labels: ${GITHUB_RUNNER_LABELS}"      # Echo the actual runner's labels
+          echo "Runner Name: ${{ github.runner.name }}"          # Echo the actual runner's name
+          echo "Runner Labels: ${{ toJson(github.runner.labels) }}"  # Echo the actual runner's labels
           
           # Define expected values
-          trusted_name="Runner-Trusted-A"   # Name of the trusted runner
-          trusted_label="trusted-agent"       # Label for the trusted runner
+          trusted_name="Runner-Trusted-A"  # Name of the trusted runner
+          trusted_label="trusted-agent"      # Label for the trusted runner
           
           # Check if the current runner is the trusted runner
-          if [[ "${GITHUB_RUNNER_NAME}" == "${trusted_name}" && "${GITHUB_RUNNER_LABELS}" == *"${trusted_label}"* ]]; then
+          if [[ "${{ github.runner.name }}" == "${trusted_name}" && "${{ toJson(github.runner.labels) }}" == *"${trusted_label}"* ]]; then
             echo "This is the trusted agent. Proceeding with the pipeline."
             echo "Hello World from Trusted Runner!"
           else
