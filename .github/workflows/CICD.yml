@@ -1,13 +1,39 @@
-name: Hello World Workfloww
+# name: Hello World Workfloww
 
-on: 
+# on: 
+#   push:
+#     branches:
+#       - main
+
+# jobs:
+#   echo-job:
+#     runs-on: [self-hosted, trusted-agent, malicious-agent]  # Specify the label of the trusted agent
+#     steps:
+#       - name: Echo Hello World
+#         run: echo "Hello World"
+
+
+name: Conditional Runner Job
+
+on:
   push:
     branches:
       - main
 
 jobs:
-  echo-job:
-    runs-on: [self-hosted, trusted-agent, malicious-agent]  # Specify the label of the trusted agent
+  check-agent:
+    runs-on: self-hosted
+    
     steps:
-      - name: Echo Hello World
-        run: echo "Hello World"
+      - name: Check if it's a malicious agent
+        if: contains(runner.labels, 'malicious-agent')
+        run: |
+          echo "Malicious agent detected!"
+          exit 1  # Fail the job if malicious agent is detected
+      
+      - name: Echo Hello World for trusted agent
+        if: contains(runner.labels, 'trusted-agent')
+        run: echo "Hello, World! Trusted agent detected!"
+      
+      - name: Default Action
+        run: echo "Running on a different agent."
