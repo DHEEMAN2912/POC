@@ -4,7 +4,9 @@ on:
   push:
     branches:
       - main
-  
+  pull_request:
+    branches:
+      - main
 
 jobs:
   differentiate-agents:
@@ -13,31 +15,14 @@ jobs:
       matrix:
         agent: ['self-hosted', 'Runner-A-Trusted', 'Runner-A-Malicious']
     
-    outputs:
-      agent_type: ${{ steps.set_agent_type.outputs.agent_type }}
-
     steps:
       - name: Check if Runner is Trusted or Malicious
-        id: set_agent_type  # Set an ID to refer to the outputs
         run: |
-          if [[ "${{ matrix.agent }}" == "Runner-A-Trusted" ]]; then
-            echo "This is a Trusted Agent."
-            echo "::set-output name=agent_type::trusted"
-          elif [[ "${{ matrix.agent }}" == "Runner-A-Malicious" ]]; then
-            echo "This is a Malicious Agent."
-            echo "::set-output name=agent_type::malicious"
+          if [[ "${{ runner.labels }}" == *"trusted-agent"* ]]; then
+            echo "Hello World"
+          elif [[ "${{ runner.labels }}" == *"malicious-agent"* ]]; then
             echo "Malicious agent detected! Failing the pipeline..."
-            exit 1  # This will fail the pipeline if it's a malicious agent
+            exit 1  # This will fail the pipeline for malicious-agent
           else
-            echo "Unknown Agent."
+            echo "Unknown agent. Failing the pipeline..."
             exit 1
-          fi  # Ensure this closes the if block
-
-  run-trusted:
-    needs: differentiate-agents
-    if: needs.differentiate-agents.outputs.agent_type == 'trusted-agent'
-    runs-on: Runner-A-Trusted
-    steps:
-      - name: Run tasks on Trusted Agent
-        run: |
-          echo "Running tasks on the Trusted Agent..."
