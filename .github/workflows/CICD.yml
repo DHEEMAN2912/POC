@@ -16,6 +16,10 @@ jobs:
         agent: ['self-hosted', 'Runner-A-Trusted', 'Runner-A-Malicious']
     
     steps:
+      - name: Debug Runner Labels
+        run: |
+          echo "Runner labels: ${{ runner.labels }}"
+      
       - name: Check if Runner is Trusted or Malicious
         run: |
           if [[ "${{ runner.labels }}" == *"trusted-agent"* ]]; then
