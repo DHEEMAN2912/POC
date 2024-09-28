@@ -9,8 +9,13 @@ jobs:
   validate-agent:
     runs-on: self-hosted
     steps:
+      - name: Debug - Output runner labels
+        run: echo "Runner labels: ${{ runner.labels }}"
+
       - name: Check agent type
         run: |
+          echo "Checking runner labels: ${{ runner.labels }}"
+          
           if [[ "${{ runner.labels }}" == *"malicious-agent"* ]]; then
             echo "Bad agent pipeline failed"
             exit 1
