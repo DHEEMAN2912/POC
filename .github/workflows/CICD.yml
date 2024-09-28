@@ -1,4 +1,4 @@
-name: Agent Validation Workflow
+name: Hello World Workflow
 
 on: 
   push:
@@ -6,23 +6,8 @@ on:
       - main
 
 jobs:
-  validate-agent:
+  echo-job:
     runs-on: self-hosted
     steps:
-      - name: Debug - Output runner labels
-        run: echo "Runner labels: ${{ runner.labels }}"
-
-      - name: Check agent type
-        run: |
-          echo "Checking runner labels: ${{ runner.labels }}"
-          
-          if [[ "${{ runner.labels }}" == *"malicious-agent"* ]]; then
-            echo "Bad agent pipeline failed"
-            exit 1
-          elif [[ "${{ runner.labels }}" == *"trusted-agent"* ]]; then
-            echo "Hello World"
-          else
-            echo "Agent type unknown, skipping"
-            exit 1
-          fi
-        shell: bash
+      - name: Echo Hello World
+        run: echo "Hello World"
