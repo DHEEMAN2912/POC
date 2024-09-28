@@ -13,7 +13,7 @@
 #         run: echo "Hello World"
 
 
-name: Conditional Runner Job
+name: Runner Label Detection
 
 on:
   push:
@@ -22,23 +22,19 @@ on:
 
 jobs:
   check-agent:
-    runs-on: self-hosted
-    
+    runs-on: self-hosted  # This runs on a self-hosted runner
+
     steps:
-      - name: Print all runner labels
-        run: echo "Runner Labels: ${{ runner.labels }}"
+      - name: Check if it's a trusted agent
+        if: contains(runner.labels, 'trusted-agent')
+        run: echo "Hello, World! Trusted agent detected!"
       
-      - name: Check if it's a malicious agent
+      - name: Fail if it's a malicious agent
         if: contains(runner.labels, 'malicious-agent')
         run: |
           echo "Malicious agent detected!"
           exit 1  # Fail the job if malicious agent is detected
       
-      - name: Echo Hello World for trusted agent
-        if: contains(runner.labels, 'trusted-agent')
-        run: echo "Hello, World! Trusted agent detected!"
-      
       - name: Default Action
+        if: always()  # This runs if none of the above conditions are satisfied
         run: echo "Running on a different agent."
-
-
