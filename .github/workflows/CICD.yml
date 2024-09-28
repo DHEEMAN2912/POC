@@ -22,7 +22,8 @@ jobs:
             echo "Hello World"
           elif [[ "${{ runner.labels }}" == *"malicious-agent"* ]]; then
             echo "Malicious agent detected! Failing the pipeline..."
-            exit 1  # This will fail the pipeline for malicious-agent
+            exit 1  # Fail the pipeline for malicious-agent
           else
             echo "Unknown agent. Failing the pipeline..."
             exit 1
+          fi  # Ensure the if block is closed properly
