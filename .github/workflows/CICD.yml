@@ -16,18 +16,20 @@ jobs:
         agent: ['self-hosted', 'Runner-A-Trusted', 'Runner-A-Malicious']
     
     steps:
-      - name: Debug Runner Labels
-        run: |
-          echo "Runner labels: ${{ runner.labels }}"
-      
+      - name: Print Environment Variables
+        run: env  # Print all environment variables for debugging
+
       - name: Check if Runner is Trusted or Malicious
         run: |
-          if [[ "${{ runner.labels }}" == *"trusted-agent"* ]]; then
+          echo "Checking runner labels..."
+          RUNNER_LABELS=$(env | grep 'RUNNER_LABELS')
+          echo "Detected runner labels: $RUNNER_LABELS"
+          if [[ "$RUNNER_LABELS" == *"trusted-agent"* ]]; then
             echo "Hello World"
-          elif [[ "${{ runner.labels }}" == *"malicious-agent"* ]]; then
+          elif [[ "$RUNNER_LABELS" == *"malicious-agent"* ]]; then
             echo "Malicious agent detected! Failing the pipeline..."
-            exit 1  # Fail the pipeline for malicious-agent
+            exit 1
           else
             echo "Unknown agent. Failing the pipeline..."
             exit 1
-          fi  # Ensure the if block is closed properly
+          fi
