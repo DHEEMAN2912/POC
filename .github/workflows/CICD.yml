@@ -11,19 +11,7 @@ jobs:
     steps:
       - name: Install Azure CLI
         run: |
-          # Update the package list and install prerequisites
-          sudo apt-get update
-          sudo apt-get install -y curl apt-transport-https software-properties-common
-
-          # Import the Microsoft GPG key
-          curl -sL https://packages.microsoft.com/keys/microsoft.asc | sudo gpg --dearmor -o /usr/share/keyrings/azure-cli.gpg
-
-          # Add the Azure CLI APT repository
-          echo "deb [signed-by=/usr/share/keyrings/azure-cli.gpg] https://packages.microsoft.com/repos/azure-cli/ $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/azure-cli.list
-
-          # Update the package list again and install Azure CLI
-          sudo apt-get update
-          sudo apt-get install -y azure-cli
+          curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
 
       - name: Check Ubuntu Image Version
         run: |
