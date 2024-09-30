@@ -31,7 +31,7 @@ jobs:
 
       - name: Check Ubuntu Image Version
         run: |
-          EXPECTED_IMAGE_VERSION="22.04.202409260"  # Set your expected version
+          EXPECTED_IMAGE_VERSION="0.20240717.1811"  # Set your expected version
           CURRENT_IMAGE_VERSION=$(az vm show --resource-group Test --name VM1 --query "storageProfile.imageReference.exactVersion" -o tsv)
 
           if [[ "$CURRENT_IMAGE_VERSION" != "$EXPECTED_IMAGE_VERSION" ]]; then
@@ -47,4 +47,4 @@ jobs:
     if: success()  # Only runs if the previous job was successful
     steps:
       - name: Run Next Steps
-        run: echo "Running next stage..."
+        run: echo "Test is Successfull. Running next stages..."
