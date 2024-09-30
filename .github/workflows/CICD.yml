@@ -24,6 +24,11 @@ jobs:
           # Use the official Azure CLI install script
           curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
 
+      - name: Log in to Azure
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}  # Uses the secret created earlier
+
       - name: Check Ubuntu Image Version
         run: |
           EXPECTED_IMAGE_VERSION="22.04.202409260"  # Set your expected version
