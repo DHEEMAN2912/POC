@@ -1,4 +1,4 @@
-name: Validate Image and Runn
+name: Validate Image and Run
 
 on:
   push:
