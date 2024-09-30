@@ -9,6 +9,15 @@ jobs:
   validate-image:
     runs-on: [self-hosted, linux-runner]  # Use the same label
     steps:
+      - name: Install Azure CLI
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y curl apt-transport-https
+          curl -sL https://packages.microsoft.com/keys/microsoft.asc | sudo apt-key add -
+          curl -sL https://packages.microsoft.com/repos/azure-cli/$(lsb_release -cs) main | sudo tee /etc/apt/sources.list.d/azure-cli.list
+          sudo apt-get update
+          sudo apt-get install -y azure-cli
+
       - name: Check Ubuntu Image Version
         run: |
           EXPECTED_IMAGE_VERSION="22.04.202409260"  # Set your expected version
@@ -27,4 +36,4 @@ jobs:
     if: success()  # Only runs if the previous job was successful
     steps:
       - name: Run Next Steps
-        run: echo "Hello World:)"
+        run: echo "Running next stage..."
