@@ -15,23 +15,8 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y apt-transport-https ca-certificates curl gnupg lsb-release
 
-          # Create a keyrings directory and add Microsoft's GPG key
-          sudo mkdir -p /etc/apt/keyrings
-          curl -sLS https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor | sudo tee /etc/apt/keyrings/microsoft.gpg > /dev/null
-          sudo chmod go+r /etc/apt/keyrings/microsoft.gpg
-
-          # Add Azure CLI APT repository
-          AZ_DIST=$(lsb_release -cs)
-          echo "Types: deb
-          URIs: https://packages.microsoft.com/repos/azure-cli/
-          Suites: ${AZ_DIST}
-          Components: main
-          Architectures: $(dpkg --print-architecture)
-          Signed-by: /etc/apt/keyrings/microsoft.gpg" | sudo tee /etc/apt/sources.list.d/azure-cli.sources
-
-          # Update package list again and install Azure CLI
-          sudo apt-get update
-          sudo apt-get install -y azure-cli
+          # Install Azure CLI using the Microsoft installation script
+          curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
 
       - name: Check Ubuntu Image Version
         run: |
