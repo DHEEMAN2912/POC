@@ -9,13 +9,19 @@ jobs:
   validate-image:
     runs-on: [self-hosted, linux-runner]  # Use the same label
     steps:
+      - name: Clean up faulty Azure CLI sources
+        run: |
+          # Remove any previous erroneous azure-cli sources
+          sudo rm -f /etc/apt/sources.list.d/azure-cli.list
+          sudo rm -f /etc/apt/sources.list.d/azure-cli.sources
+
       - name: Install Azure CLI
         run: |
           # Update the package list and install prerequisites
           sudo apt-get update
           sudo apt-get install -y apt-transport-https ca-certificates curl gnupg lsb-release
 
-          # Install Azure CLI using the Microsoft installation script
+          # Use the official Azure CLI install script
           curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
 
       - name: Check Ubuntu Image Version
