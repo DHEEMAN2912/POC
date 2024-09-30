@@ -7,7 +7,7 @@ on:
 
 jobs:
   validate-image:
-    runs-on: self-hosted  # Use the same label
+    runs-on: [self-hosted, linux-runner]  # Use the same label
     steps:
       - name: Clean up faulty Azure CLI sources
         run: |
