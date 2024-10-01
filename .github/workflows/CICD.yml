@@ -101,7 +101,7 @@ jobs:
 
       - name: Check Ubuntu Image Version
         run: |
-          CURRENT_IMAGE_VERSION=$(az vm show --resource-group Test --name VM2 --query "storageProfile.imageReference.exactVersion" -o tsv)
+          CURRENT_IMAGE_VERSION=$(az vm show --resource-group Test --name VM12 --query "storageProfile.imageReference.exactVersion" -o tsv)
 
           if [[ "$CURRENT_IMAGE_VERSION" != "$LATEST_IMAGE_VERSION" ]]; then
             echo "Error: Image version does not match. Aborting."
