@@ -31,10 +31,10 @@
 
 #       - name: Check Ubuntu Image Version
 #         run: |
-#           EXPECTED_IMAGE_ID="${{ secrets.EXPECTED_IMAGE_ID }}"  # Use the secret here
+#           EXPECTED_IMAGE_NAME="${{ secrets.EXPECTED_IMAGE_NAME }}"  # Use the secret here
 #           CURRENT_IMAGE_ID=$(az vm show --resource-group Test --name VM11 --query "storageProfile.imageReference.exactVersion" -o tsv)
 
-#           if [[ "$CURRENT_IMAGE_ID" != "$EXPECTED_IMAGE_ID" ]]; then
+#           if [[ "$CURRENT_IMAGE_ID" != "$EXPECTED_IMAGE_NAME" ]]; then
 #             echo "Error: Image version does not match. Aborting."
 #             exit 1
 #           else
@@ -94,17 +94,17 @@ jobs:
 
       - name: Check Azure VM Image ID
         run: |
-          EXPECTED_IMAGE_ID="${{ secrets.EXPECTED_IMAGE_ID }}"  # Use the secret for expected image ID
+          EXPECTED_IMAGE_NAME="${{ secrets.EXPECTED_IMAGE_NAME }}"  # Use the secret for expected image ID
           VM_NAME="${{ env.VM_NAME }}"  # Use the VM name from the hostname
           
           # Query the image ID and extract only the image name
           CURRENT_IMAGE_ID=$(az vm show --resource-group Test --name "$VM_NAME" --query "storageProfile.imageReference.id" -o tsv)
           CURRENT_IMAGE_NAME=$(basename "$CURRENT_IMAGE_ID")
 
-          echo "Expected Image ID: $EXPECTED_IMAGE_ID"
+          echo "Expected Image ID: $EXPECTED_IMAGE_NAME"
           echo "Current Image Name: $CURRENT_IMAGE_NAME"
 
-          if [[ "$CURRENT_IMAGE_NAME" != "$EXPECTED_IMAGE_ID" ]]; then
+          if [[ "$CURRENT_IMAGE_NAME" != "$EXPECTED_IMAGE_NAME" ]]; then
             echo "Error: Image ID does not match. Aborting."
             exit 1
           else
