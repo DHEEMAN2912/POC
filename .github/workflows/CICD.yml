@@ -32,7 +32,7 @@ jobs:
       - name: Check Ubuntu Image Version
         run: |
           EXPECTED_IMAGE_VERSION="${{ secrets.EXPECTED_IMAGE_VERSION }}"  # Use the secret here
-          CURRENT_IMAGE_VERSION=$(az vm show --resource-group Test --name VM1 --query "storageProfile.imageReference.exactVersion" -o tsv)
+          CURRENT_IMAGE_VERSION=$(az vm show --resource-group Test --name VM2 --query "storageProfile.imageReference.exactVersion" -o tsv)
 
           if [[ "$CURRENT_IMAGE_VERSION" != "$EXPECTED_IMAGE_VERSION" ]]; then
             echo "Error: Image version does not match. Aborting."
