@@ -1,4 +1,4 @@
-# name: Validate Image and Run
+# name: Validate VM UUID and Run
 
 # on:
 #   push:
@@ -6,65 +6,7 @@
 #       - main
 
 # jobs:
-#   validate-image:
-#     runs-on: [self-hosted, linux-runner]  # Use the same label
-#     steps:
-#       - name: Clean up faulty Azure CLI sources
-#         run: |
-#           # Remove any previous erroneous azure-cli sources
-#           sudo rm -f /etc/apt/sources.list.d/azure-cli.list
-#           sudo rm -f /etc/apt/sources.list.d/azure-cli.sources
-
-#       - name: Install Azure CLI
-#         run: |
-#           # Update the package list and install prerequisites
-#           sudo apt-get update
-#           sudo apt-get install -y apt-transport-https ca-certificates curl gnupg lsb-release
-
-#           # Use the official Azure CLI install script
-#           curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
-
-#       - name: Log in to Azure
-#         uses: azure/login@v1
-#         with:
-#           creds: ${{ secrets.AZURE_CREDENTIALS }}  # Uses the secret created earlier
-
-#       - name: Check Ubuntu Image Version
-#         run: |
-#           EXPECTED_IMAGE_NAME="${{ secrets.EXPECTED_IMAGE_NAME }}"  # Use the secret here
-#           CURRENT_IMAGE_ID=$(az vm show --resource-group Test --name VM11 --query "storageProfile.imageReference.exactVersion" -o tsv)
-
-#           if [[ "$CURRENT_IMAGE_ID" != "$EXPECTED_IMAGE_NAME" ]]; then
-#             echo "Error: Image version does not match. Aborting."
-#             exit 1
-#           else
-#             echo "Image version matches. Proceeding..."
-#           fi
-
-#   next-stage:
-#     runs-on: [self-hosted, linux-runner]
-#     needs: validate-image
-#     if: success()  # Only runs if the previous job was successful
-#     steps:
-#       - name: Run Next Steps
-#         run: echo "Test is Successful. Running next stages..."
-
-
-
-
-
-
-
-
-# name: Validate Image and Run
-
-# on:
-#   push:
-#     branches:
-#       - main
-
-# jobs:
-#   validate-image:
+#   validate-uuid:
 #     runs-on: [self-hosted, linux-runner]  # Use the same label
 #     steps:
 #       - name: Clean up faulty Azure CLI sources
@@ -92,98 +34,27 @@
 #           VM_NAME=$(cat /etc/hostname)
 #           echo "VM_NAME=${VM_NAME}" >> $GITHUB_ENV
 
-#       - name: Check Azure VM Image ID
+#       - name: Check Azure VM UUID
 #         run: |
-#           EXPECTED_IMAGE_NAME="${{ secrets.EXPECTED_IMAGE_NAME }}"  # Use the secret for expected image ID
-#           VM_NAME="${{ env.VM_NAME }}"  # Use the VM name from the hostname
+#           EXPECTED_UUID="${{ secrets.EXPECTED_UUID }}"  # Use the secret for expected VM UUID
           
-#           # Query the image ID and extract only the image name
-#           CURRENT_IMAGE_ID=$(az vm show --resource-group Test --name "$VM_NAME" --query "storageProfile.imageReference.id" -o tsv)
-#           CURRENT_IMAGE_NAME=$(basename "$CURRENT_IMAGE_ID")
+#           # Query the VM's UUID using dmidecode
+#           CURRENT_UUID=$(sudo dmidecode | grep UUID | awk '{print $2}')
 
-#           echo "Expected Image ID: $EXPECTED_IMAGE_NAME"
-#           echo "Current Image Name: $CURRENT_IMAGE_NAME"
+#           echo "Expected VM UUID: $EXPECTED_UUID"
+#           echo "Current VM UUID: $CURRENT_UUID"
 
-#           if [[ "$CURRENT_IMAGE_NAME" != "$EXPECTED_IMAGE_NAME" ]]; then
-#             echo "Error: Image ID does not match. Aborting."
+#           if [[ "$CURRENT_UUID" != "$EXPECTED_UUID" ]]; then
+#             echo "Error: VM UUID does not match. Aborting."
 #             exit 1
 #           else
-#             echo "Image ID matches. Proceeding..."
+#             echo "VM UUID matches. Proceeding..."
 #           fi
 
 #   next-stage:
 #     runs-on: [self-hosted, linux-runner]
-#     needs: validate-image
+#     needs: validate-uuid
 #     if: success()  # Only runs if the previous job was successful
 #     steps:
 #       - name: Run Next Steps
 #         run: echo "Test is Successful. Running next stages..."
-
-
-
-
-
-
-
-
-
-name: Validate VM UUID and Run
-
-on:
-  push:
-    branches:
-      - main
-
-jobs:
-  validate-uuid:
-    runs-on: [self-hosted, linux-runner]  # Use the same label
-    steps:
-      - name: Clean up faulty Azure CLI sources
-        run: |
-          # Remove any previous erroneous azure-cli sources
-          sudo rm -f /etc/apt/sources.list.d/azure-cli.list
-          sudo rm -f /etc/apt/sources.list.d/azure-cli.sources
-
-      - name: Install Azure CLI
-        run: |
-          # Update the package list and install prerequisites
-          sudo apt-get update
-          sudo apt-get install -y apt-transport-https ca-certificates curl gnupg lsb-release
-
-          # Use the official Azure CLI install script
-          curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
-
-      - name: Log in to Azure
-        uses: azure/login@v1
-        with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}  # Uses the secret created earlier
-
-      - name: Get VM Name from Hostname
-        run: |
-          VM_NAME=$(cat /etc/hostname)
-          echo "VM_NAME=${VM_NAME}" >> $GITHUB_ENV
-
-      - name: Check Azure VM UUID
-        run: |
-          EXPECTED_UUID="${{ secrets.EXPECTED_UUID }}"  # Use the secret for expected VM UUID
-          
-          # Query the VM's UUID using dmidecode
-          CURRENT_UUID=$(sudo dmidecode | grep UUID | awk '{print $2}')
-
-          echo "Expected VM UUID: $EXPECTED_UUID"
-          echo "Current VM UUID: $CURRENT_UUID"
-
-          if [[ "$CURRENT_UUID" != "$EXPECTED_UUID" ]]; then
-            echo "Error: VM UUID does not match. Aborting."
-            exit 1
-          else
-            echo "VM UUID matches. Proceeding..."
-          fi
-
-  next-stage:
-    runs-on: [self-hosted, linux-runner]
-    needs: validate-uuid
-    if: success()  # Only runs if the previous job was successful
-    steps:
-      - name: Run Next Steps
-        run: echo "Test is Successful. Running next stages..."
