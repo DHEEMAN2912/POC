@@ -58,3 +58,135 @@
 #     steps:
 #       - name: Run Next Steps
 #         run: echo "Test is Successful. Running next stages..."
+
+
+
+
+
+
+
+
+
+# New Pipiline
+
+
+name: Validate VM UUID, Build, Push, and Validate Docker Image
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  # Step 1: Validate VM UUID
+  validate-uuid:
+    runs-on: [self-hosted, linux-runner]  # Use the same label
+    steps:
+      - name: Clean up faulty Azure CLI sources
+        run: |
+          # Remove any previous erroneous azure-cli sources
+          sudo rm -f /etc/apt/sources.list.d/azure-cli.list
+          sudo rm -f /etc/apt/sources.list.d/azure-cli.sources
+
+      - name: Install Azure CLI
+        run: |
+          # Update the package list and install prerequisites
+          sudo apt-get update
+          sudo apt-get install -y apt-transport-https ca-certificates curl gnupg lsb-release
+
+          # Use the official Azure CLI install script
+          curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
+
+      - name: Log in to Azure
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}  # Uses the secret created earlier
+
+      - name: Get VM Name from Hostname
+        run: |
+          VM_NAME=$(cat /etc/hostname)
+          echo "VM_NAME=${VM_NAME}" >> $GITHUB_ENV
+
+      - name: Check Azure VM UUID
+        run: |
+          EXPECTED_UUID="${{ secrets.EXPECTED_UUID }}"  # Use the secret for expected VM UUID
+          
+          # Query the VM's UUID using dmidecode
+          CURRENT_UUID=$(sudo dmidecode | grep UUID | awk '{print $2}')
+
+          echo "Expected VM UUID: $EXPECTED_UUID"
+          echo "Current VM UUID: $CURRENT_UUID"
+
+          if [[ "$CURRENT_UUID" != "$EXPECTED_UUID" ]]; then
+            echo "Error: VM UUID does not match. Aborting."
+            exit 1
+          else
+            echo "VM UUID matches. Proceeding..."
+          fi
+
+  # Step 2: Build, Push, and Get SHA of Docker Image
+  build-and-push:
+    runs-on: [self-hosted, linux-runner]
+    needs: validate-uuid
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v2
+
+      - name: Log in to Docker Hub
+        run: |
+          echo "${{ secrets.DOCKERHUB_PASSWORD }}" | docker login -u ${{ secrets.DOCKERHUB_USERNAME }} --password-stdin
+
+      - name: Build Docker Image
+        run: |
+          docker build -t my-app-image .
+          docker tag my-app-image:latest ${{ secrets.DOCKER_REGISTRY_URL }}/my-app-image:latest
+
+      - name: Push Docker Image to Registry
+        run: |
+          export DOCKER_CONTENT_TRUST=1
+          docker push ${{ secrets.DOCKER_REGISTRY_URL }}/my-app-image:latest
+
+      - name: Extract Docker Image SHA256 Digest
+        id: get_image_sha
+        run: |
+          IMAGE_SHA=$(docker inspect --format='{{index .RepoDigests 0}}' ${{ secrets.DOCKER_REGISTRY_URL }}/my-app-image:latest | awk -F'@' '{print $2}')
+          echo "Image SHA256: $IMAGE_SHA"
+          
+          # Save the SHA256 value in the environment
+          echo "IMAGE_SHA=$IMAGE_SHA" >> $GITHUB_ENV
+
+      - name: Save Docker Image SHA256 to Build Log
+        run: echo "Image SHA256 is ${{ env.IMAGE_SHA }}"
+
+  # Step 3: Validate Image SHA256
+  validate-image:
+    runs-on: [self-hosted, linux-runner]
+    needs: build-and-push
+    steps:
+      - name: Pull Docker Image for Validation
+        run: |
+          docker pull ${{ secrets.DOCKER_REGISTRY_URL }}/my-app-image:latest
+
+      - name: Validate Pulled Docker Image SHA256
+        run: |
+          PULLED_SHA=$(docker inspect --format='{{index .RepoDigests 0}}' ${{ secrets.DOCKER_REGISTRY_URL }}/my-app-image:latest | awk -F'@' '{print $2}')
+          EXPECTED_SHA="${{ secrets.EXPECTED_IMAGE_SHA }}"
+
+          echo "Pulled Image SHA256: $PULLED_SHA"
+          echo "Expected Image SHA256: $EXPECTED_SHA"
+
+          if [[ "$PULLED_SHA" != "$EXPECTED_SHA" ]]; then
+            echo "Error: Image SHA256 does not match. Aborting."
+            exit 1
+          else
+            echo "Image SHA256 matches. Proceeding..."
+          fi
+
+  # Step 4: Next stage (if validation is successful)
+  next-stage:
+    runs-on: [self-hosted, linux-runner]
+    needs: validate-image
+    if: success()  # Only runs if the previous job was successful
+    steps:
+      - name: Run Next Steps
+        run: echo "Test is Successful. Running next stages..."
