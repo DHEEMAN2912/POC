@@ -145,18 +145,18 @@ jobs:
 
       - name: Build Docker Image
         run: |
-          docker build -t my-app-image .
-          docker tag my-app-image:latest ${{ secrets.DOCKER_REGISTRY_URL }}/my-app-image:latest
+          sudo docker build -t my-app-image .
+          sudo docker tag my-app-image:latest ${{ secrets.DOCKER_REGISTRY_URL }}/my-app-image:latest
 
       - name: Push Docker Image to Registry
         run: |
           export DOCKER_CONTENT_TRUST=1
-          docker push ${{ secrets.DOCKER_REGISTRY_URL }}/my-app-image:latest
+          sudo docker push ${{ secrets.DOCKER_REGISTRY_URL }}/my-app-image:latest
 
       - name: Extract Docker Image SHA256 Digest
         id: get_image_sha
         run: |
-          IMAGE_SHA=$(docker inspect --format='{{index .RepoDigests 0}}' ${{ secrets.DOCKER_REGISTRY_URL }}/my-app-image:latest | awk -F'@' '{print $2}')
+          IMAGE_SHA=$(sudo docker inspect --format='{{index .RepoDigests 0}}' ${{ secrets.DOCKER_REGISTRY_URL }}/my-app-image:latest | awk -F'@' '{print $2}')
           echo "Image SHA256: $IMAGE_SHA"
           
           # Save the SHA256 value in the environment
@@ -172,11 +172,11 @@ jobs:
     steps:
       - name: Pull Docker Image for Validation
         run: |
-          docker pull ${{ secrets.DOCKER_REGISTRY_URL }}/my-app-image:latest
+         sudo docker pull ${{ secrets.DOCKER_REGISTRY_URL }}/my-app-image:latest
 
       - name: Validate Pulled Docker Image SHA256
         run: |
-          PULLED_SHA=$(docker inspect --format='{{index .RepoDigests 0}}' ${{ secrets.DOCKER_REGISTRY_URL }}/my-app-image:latest | awk -F'@' '{print $2}')
+          PULLED_SHA=$(sudo docker inspect --format='{{index .RepoDigests 0}}' ${{ secrets.DOCKER_REGISTRY_URL }}/my-app-image:latest | awk -F'@' '{print $2}')
           EXPECTED_SHA="${{ secrets.EXPECTED_IMAGE_SHA }}"
 
           echo "Pulled Image SHA256: $PULLED_SHA"
