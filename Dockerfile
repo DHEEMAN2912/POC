@@ -1,20 +1,21 @@
-# Use an official Node.js runtime as the base image
-FROM node:14
+# Use Ubuntu as the base image
+FROM ubuntu:20.04
 
-# Set the working directory inside the container
-WORKDIR /app
+# Set the maintainer
+LABEL maintainer="dheeman.das@pwc.com"
 
-# Copy package.json and package-lock.json files
-COPY package*.json ./
+# Set up environment variable
+ENV DEBIAN_FRONTEND=noninteractive
 
-# Install the app dependencies
-RUN npm install
+# Update and install basic packages in a single RUN command
+RUN apt-get update -q && \
+    apt-get install -y -q \
+    curl \
+    vim \
+    git \
+    ca-certificates && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
 
-# Copy the rest of the application files
-COPY . .
-
-# Expose the port the app will run on
-EXPOSE 8080
-
-# Define the command to run the application
-CMD ["npm", "start"]
+# Default command
+CMD ["/bin/bash"]
