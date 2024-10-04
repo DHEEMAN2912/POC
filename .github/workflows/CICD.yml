@@ -47,6 +47,8 @@ jobs:
   build-and-push:
     runs-on: self-hosted
     needs: validate-uuid
+    outputs:
+      IMAGE_SHA: ${{ steps.get_image_sha.outputs.IMAGE_SHA }}
     steps:
       - name: Check out code
         uses: actions/checkout@v2
@@ -77,10 +79,7 @@ jobs:
         run: |
           IMAGE_SHA=$(sudo docker inspect --format='{{index .RepoDigests 0}}' ${{ secrets.DOCKER_REGISTRY_URL }}/my-app-image:latest | awk -F'@' '{print $2}')
           echo "Image SHA256: $IMAGE_SHA"
-          echo "IMAGE_SHA=$IMAGE_SHA" >> $GITHUB_ENV  # Save IMAGE_SHA to GITHUB_ENV
-
-      - name: Save Docker Image SHA256 to Build Log
-        run: echo "Image SHA256 is ${{ env.IMAGE_SHA }}"
+          echo "::set-output name=IMAGE_SHA::$IMAGE_SHA"
 
   # Step 3: Validate Image SHA256
   validate-image:
@@ -98,7 +97,7 @@ jobs:
       - name: Validate Pulled Docker Image SHA256
         run: |
           PULLED_SHA=$(sudo docker inspect --format='{{index .RepoDigests 0}}' ${{ secrets.DOCKER_REGISTRY_URL }}/my-app-image:latest | awk -F'@' '{print $2}')
-          EXPECTED_SHA="${{ env.IMAGE_SHA }}"
+          EXPECTED_SHA="${{ needs.build-and-push.outputs.IMAGE_SHA }}"
 
           echo "Pulled Image SHA256: $PULLED_SHA"
           echo "Expected Image SHA256: $EXPECTED_SHA"
