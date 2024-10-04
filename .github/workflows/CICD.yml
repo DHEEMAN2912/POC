@@ -43,7 +43,7 @@ jobs:
             echo "VM UUID matches. Proceeding..."
           fi
 
-  # Step 2: Build, Push, and Get SHA of Docker Image
+  # Step 2: Build, Push, Sign, and Get SHA of Docker Image
   build-and-push:
     runs-on: self-hosted
     needs: validate-uuid
@@ -66,20 +66,40 @@ jobs:
 
       - name: Build Docker Image
         run: |
-          sudo docker build -t my-app-image .
-          sudo docker tag my-app-image:latest ${{ secrets.DOCKER_REGISTRY_URL }}/my-app-image:latest
+          sudo docker build -t ${{ secrets.IMAGE_NAME }} .
+          sudo docker tag ${{ secrets.IMAGE_NAME }}:latest ${{ secrets.DOCKER_REGISTRY_URL }}/${{ secrets.IMAGE_NAME }}:${{ secrets.IMAGE_TAG }}
 
       - name: Push Docker Image to Registry
         run: |
           export DOCKER_CONTENT_TRUST=1
-          sudo docker push ${{ secrets.DOCKER_REGISTRY_URL }}/my-app-image:latest
+          sudo docker push ${{ secrets.DOCKER_REGISTRY_URL }}/${{ secrets.IMAGE_NAME }}:${{ secrets.IMAGE_TAG }}
 
       - name: Extract Docker Image SHA256 Digest
         id: get_image_sha
         run: |
-          IMAGE_SHA=$(sudo docker inspect --format='{{index .RepoDigests 0}}' ${{ secrets.DOCKER_REGISTRY_URL }}/my-app-image:latest | awk -F'@' '{print $2}')
+          IMAGE_SHA=$(sudo docker inspect --format='{{index .RepoDigests 0}}' ${{ secrets.DOCKER_REGISTRY_URL }}/${{ secrets.IMAGE_NAME }}:${{ secrets.IMAGE_TAG }} | awk -F'@' '{print $2}')
           echo "Image SHA256: $IMAGE_SHA"
           echo "::set-output name=IMAGE_SHA::$IMAGE_SHA"
+
+      - name: Install Cosign for Image Signing
+        run: |
+          wget https://github.com/sigstore/cosign/releases/download/v1.5.2/cosign-linux-amd64
+          chmod +x cosign-linux-amd64
+          sudo mv cosign-linux-amd64 /usr/local/bin/cosign
+
+      - name: Sign Docker Image with Cosign
+        run: |
+          cosign sign --key ${{ secrets.COSIGN_KEY }} ${{ secrets.DOCKER_REGISTRY_URL }}/${{ secrets.IMAGE_NAME }}:${{ secrets.IMAGE_TAG }}
+
+      - name: Install Trivy for Vulnerability Scanning
+        run: |
+          sudo apt-get install -y wget
+          wget https://github.com/aquasecurity/trivy/releases/download/v0.19.2/trivy_0.19.2_Linux-64bit.deb
+          sudo dpkg -i trivy_0.19.2_Linux-64bit.deb
+
+      - name: Scan Docker Image with Trivy
+        run: |
+          trivy image ${{ secrets.DOCKER_REGISTRY_URL }}/${{ secrets.IMAGE_NAME }}:${{ secrets.IMAGE_TAG }}
 
   # Step 3: Validate Image SHA256
   validate-image:
@@ -89,14 +109,14 @@ jobs:
       - name: Pull Docker Image for Validation
         run: |
           export DOCKER_CONTENT_TRUST=1
-          sudo docker pull ${{ secrets.DOCKER_REGISTRY_URL }}/my-app-image:latest
+          sudo docker pull ${{ secrets.DOCKER_REGISTRY_URL }}/${{ secrets.IMAGE_NAME }}:${{ secrets.IMAGE_TAG }}
 
       - name: Debug Docker Inspect Output
-        run: sudo docker inspect --format='{{index .RepoDigests 0}}' ${{ secrets.DOCKER_REGISTRY_URL }}/my-app-image:latest
+        run: sudo docker inspect --format='{{index .RepoDigests 0}}' ${{ secrets.DOCKER_REGISTRY_URL }}/${{ secrets.IMAGE_NAME }}:${{ secrets.IMAGE_TAG }}
 
       - name: Validate Pulled Docker Image SHA256
         run: |
-          PULLED_SHA=$(sudo docker inspect --format='{{index .RepoDigests 0}}' ${{ secrets.DOCKER_REGISTRY_URL }}/my-app-image:latest | awk -F'@' '{print $2}')
+          PULLED_SHA=$(sudo docker inspect --format='{{index .RepoDigests 0}}' ${{ secrets.DOCKER_REGISTRY_URL }}/${{ secrets.IMAGE_NAME }}:${{ secrets.IMAGE_TAG }} | awk -F'@' '{print $2}')
           EXPECTED_SHA="${{ needs.build-and-push.outputs.IMAGE_SHA }}"
 
           echo "Pulled Image SHA256: $PULLED_SHA"
