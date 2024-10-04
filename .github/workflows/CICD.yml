@@ -87,8 +87,8 @@ jobs:
     runs-on: self-hosted
     needs: build-and-push
     steps:
-      - name: Check IMAGE_SHA Value
-        run: echo "IMAGE_SHA value is: ${{ env.IMAGE_SHA }}"
+      # - name: Check IMAGE_SHA Value
+      #   run: echo "IMAGE_SHA value is: ${{ env.IMAGE_SHA }}"
 
       - name: Pull Docker Image for Validation
         run: |
