@@ -86,6 +86,13 @@ jobs:
           wget https://github.com/sigstore/cosign/releases/download/v1.5.2/cosign-linux-amd64
           chmod +x cosign-linux-amd64
           sudo mv cosign-linux-amd64 /usr/local/bin/cosign
+          
+      - name: Debug Image Details
+        run: |
+          echo "Registry: ${{ secrets.DOCKER_REGISTRY_URL }}"
+          echo "Image: ${{ secrets.IMAGE_NAME }}"
+          echo "Tag: ${{ secrets.IMAGE_TAG }}"
+          echo "Cosign Key: ${{ secrets.COSIGN_KEY }}"
 
       - name: Sign Docker Image with Cosign
         run: |
