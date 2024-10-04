@@ -8,7 +8,7 @@ on:
 jobs:
   # Step 1: Validate VM UUID
   validate-uuid:
-    runs-on: self-hosted
+    runs-on: [self-hosted, linux-runner]
     steps:
       - name: Clean up faulty Azure CLI sources
         run: |
@@ -45,7 +45,7 @@ jobs:
 
   # Step 2: Build, Push, Sign, and Get SHA of Docker Image
   build-and-push:
-    runs-on: self-hosted
+    runs-on: [self-hosted, linux-runner]
     needs: validate-uuid
     outputs:
       IMAGE_SHA: ${{ steps.get_image_sha.outputs.IMAGE_SHA }}
@@ -103,7 +103,7 @@ jobs:
 
   # Step 3: Validate Image SHA256
   validate-image:
-    runs-on: self-hosted
+    runs-on: [self-hosted, linux-runner]
     needs: build-and-push
     steps:
       - name: Pull Docker Image for Validation
@@ -131,7 +131,7 @@ jobs:
 
   # Step 4: Next stage (if validation is successful)
   next-stage:
-    runs-on: self-hosted
+    runs-on: [self-hosted, linux-runner]
     needs: validate-image
     if: success()
     steps:
