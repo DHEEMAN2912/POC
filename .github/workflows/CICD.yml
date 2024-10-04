@@ -77,7 +77,7 @@ jobs:
         run: |
           IMAGE_SHA=$(sudo docker inspect --format='{{index .RepoDigests 0}}' ${{ secrets.DOCKER_REGISTRY_URL }}/my-app-image:latest | awk -F'@' '{print $2}')
           echo "Image SHA256: $IMAGE_SHA"
-          echo "IMAGE_SHA=$IMAGE_SHA" >> $GITHUB_ENV
+          echo "IMAGE_SHA=$IMAGE_SHA" >> $GITHUB_ENV  # Save IMAGE_SHA to GITHUB_ENV
 
       - name: Save Docker Image SHA256 to Build Log
         run: echo "Image SHA256 is ${{ env.IMAGE_SHA }}"
@@ -87,9 +87,6 @@ jobs:
     runs-on: self-hosted
     needs: build-and-push
     steps:
-      # - name: Check IMAGE_SHA Value
-      #   run: echo "IMAGE_SHA value is: ${{ env.IMAGE_SHA }}"
-
       - name: Pull Docker Image for Validation
         run: |
           export DOCKER_CONTENT_TRUST=1
