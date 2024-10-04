@@ -87,10 +87,16 @@ jobs:
     runs-on: [self-hosted, linux-runner]
     needs: build-and-push
     steps:
+      - name: Check IMAGE_SHA Value
+        run: echo "IMAGE_SHA value is: ${{ env.IMAGE_SHA }}"
+
       - name: Pull Docker Image for Validation
         run: |
           export DOCKER_CONTENT_TRUST=1
           sudo docker pull ${{ secrets.DOCKER_REGISTRY_URL }}/my-app-image:latest
+
+      - name: Debug Docker Inspect Output
+        run: sudo docker inspect --format='{{index .RepoDigests 0}}' ${{ secrets.DOCKER_REGISTRY_URL }}/my-app-image:latest
 
       - name: Validate Pulled Docker Image SHA256
         run: |
