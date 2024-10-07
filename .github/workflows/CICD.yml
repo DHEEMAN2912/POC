@@ -1,4 +1,4 @@
-name: Validate VM UUID, Build, Push, and Validate Docker Image
+name: Validate VM UUID, Build, Push, and Validate Docker Imagee
 
 on:
   push:
