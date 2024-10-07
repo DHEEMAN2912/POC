@@ -97,7 +97,7 @@ jobs:
       - name: Sign Docker Image with Cosign
         run: |
           echo "Signing Image: ${{ secrets.DOCKER_REGISTRY_URL }}/${{ secrets.IMAGE_NAME }}:${{ secrets.IMAGE_TAG }}"
-          cosign sign --key ${{ secrets.COSIGN_KEY }} "${{ secrets.DOCKER_REGISTRY_URL }}/${{ secrets.IMAGE_NAME }}:${{ secrets.IMAGE_TAG }}"
+          cosign sign --key cosign.key "${{ secrets.DOCKER_REGISTRY_URL }}/${{ secrets.IMAGE_NAME }}:${{ secrets.IMAGE_TAG }}"
 
       - name: Install Trivy for Vulnerability Scanning
         run: |
