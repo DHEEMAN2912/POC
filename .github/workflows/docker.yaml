@@ -7,7 +7,6 @@ on:
 
 jobs:
   verify-and-run:
-    # Specify 'runs-on' with a container by defining the container in the 'container' block
     runs-on: [self-hosted, linux-runner]  # This starts the job on a VM, but will run the job in the container below
 
     container:
@@ -16,12 +15,11 @@ jobs:
       volumes:
         - /var/run/docker.sock:/var/run/docker.sock  # Mount Docker socket from host to container
 
-
     steps:
-    - name: Set up Docker in Docker 
+    - name: Set up Docker in Docker
       run: |
-         # Ensure Docker is running correctly
-          docker version
+        # Use sudo to avoid permission issues
+        sudo docker version
 
     - name: Check out the repository
       uses: actions/checkout@v2
@@ -30,13 +28,13 @@ jobs:
       id: build_image
       run: |
         IMAGE_NAME=${{ secrets.MY_IMAGE }}
-        IMAGE_TAG==${{ secrets.MY_TAG }}
+        IMAGE_TAG=${{ secrets.MY_TAG }}
 
-        # Build the Docker image from the Dockerfile in your repository
-        docker build -t $IMAGE_NAME:$IMAGE_TAG .
+        # Use sudo to build the Docker image
+        sudo docker build -t $IMAGE_NAME:$IMAGE_TAG .
 
         # Get the SHA256 ID of the image
-        IMAGE_SHA256=$(docker images --no-trunc | grep "$IMAGE_NAME" | grep "$IMAGE_TAG" | awk '{print $3}')
+        IMAGE_SHA256=$(sudo docker images --no-trunc | grep "$IMAGE_NAME" | grep "$IMAGE_TAG" | awk '{print $3}')
         echo "Image SHA256: $IMAGE_SHA256"
 
         # Set the image SHA256 as an output
@@ -48,11 +46,11 @@ jobs:
         IMAGE_NAME=${{ secrets.MY_IMAGE }}
         IMAGE_TAG=${{ secrets.MY_TAG }}
 
-        # Run the container from the built image
-        CONTAINER_ID=$(docker run -d $IMAGE_NAME:$IMAGE_TAG)
+        # Use sudo to run the container
+        CONTAINER_ID=$(sudo docker run -d $IMAGE_NAME:$IMAGE_TAG)
 
         # Get the SHA256 ID of the running container
-        CONTAINER_SHA256=$(docker inspect --format='{{.Id}}' $CONTAINER_ID)
+        CONTAINER_SHA256=$(sudo docker inspect --format='{{.Id}}' $CONTAINER_ID)
         echo "Container SHA256: $CONTAINER_SHA256"
 
         # Set the container SHA256 as an output
@@ -62,10 +60,8 @@ jobs:
       run: |
         if [ "${{ steps.build_image.outputs.image_sha256 }}" == "${{ steps.run_container.outputs.container_sha256 }}" ]; then
             echo "SHA256 IDs match. Running the container as an agent."
-            echo "hurrey!!! we did it.Procedding for new stage:)"
+            echo "Hurrah! We did it. Proceeding to the next stage :)"
         else
             echo "SHA256 IDs do not match. Failing the pipeline."
             exit 1
         fi
-
-    # Additional steps to run tasks in the container
