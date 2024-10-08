@@ -78,13 +78,16 @@
 
 
 
+
+        
+
 name: CI Pipeline in Docker
 
 on:
   push:
     branches:
-      - dev  # Change this to your desired branch
- 
+      - dev  # Adjust this to your desired branch
+
 
 jobs:
   build:
@@ -97,7 +100,9 @@ jobs:
       - name: Build Docker Image
         id: build-image
         run: |
-          IMAGE_NAME="myapp"  # Change to your desired image name
+          IMAGE_NAME="myapp"  # Name of the Docker image
+          
+          # Build the Docker image from the Dockerfile in the repository
           docker build -t $IMAGE_NAME .
 
           # Get the SHA256 ID of the built image
@@ -105,7 +110,7 @@ jobs:
           echo "Image SHA256: $IMAGE_SHA"
 
           # Save the image SHA256 ID as an output variable
-          echo "::set-output name=image_sha::$IMAGE_SHA"
+          echo "image_sha=$IMAGE_SHA" >> $GITHUB_ENV  # Using environment variable for cross-job access
 
   run-container:
     runs-on: ubuntu-latest
@@ -118,9 +123,9 @@ jobs:
         id: run-container
         run: |
           IMAGE_NAME="myapp"  # Same image name as before
-          IMAGE_SHA="${{ needs.build.outputs.image_sha }}"
+          IMAGE_SHA="${{ env.image_sha }}"  # Accessing the environment variable set in the previous job
 
-          # Run the container from the built image and execute commands inside it
+          # Run the container from the built image
           CONTAINER_ID=$(docker run -d $IMAGE_NAME)
 
           # Capture the container SHA256 ID
@@ -128,7 +133,7 @@ jobs:
           echo "Container SHA256: $CONTAINER_SHA"
 
           # Save the container SHA256 ID as an output variable
-          echo "::set-output name=container_sha::$CONTAINER_SHA"
+          echo "container_sha=$CONTAINER_SHA" >> $GITHUB_ENV  # Using environment variable for cross-job access
 
           # Clean up the container
           docker stop $CONTAINER_ID
@@ -140,8 +145,8 @@ jobs:
     steps:
       - name: Validate SHA256 IDs
         run: |
-          IMAGE_SHA="${{ needs.build.outputs.image_sha }}"
-          CONTAINER_SHA="${{ needs.run-container.outputs.container_sha }}"
+          IMAGE_SHA="${{ env.image_sha }}"  # Accessing the environment variable from previous job
+          CONTAINER_SHA="${{ env.container_sha }}"  # Accessing the environment variable from previous job
 
           echo "Validating SHA256 IDs..."
           echo "Image SHA: $IMAGE_SHA"
