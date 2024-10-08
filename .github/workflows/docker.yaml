@@ -1,77 +1,157 @@
-name: Build and Verify Container
+# name: Build and Verify Container
+
+# on:
+#   push:
+#     branches:
+#       - dev
+
+# jobs:
+#   verify-and-run:
+#     runs-on: self-hosted  # Use a self-hosted runner
+
+#     container:
+#       image: docker:dind  # Use the Docker-in-Docker image
+#       options: --privileged  # Allow privileged access
+#       volumes:
+#         - /var/run/docker.sock:/var/run/docker.sock  # Mount Docker socket from host to container
+
+#     steps:
+#     - name: Check Docker Group Membership
+#       run: |
+#         if groups $USER | grep &>/dev/null '\bdocker\b'; then
+#           echo "$USER is part of the docker group."
+#         else
+#           echo "$USER is NOT part of the docker group. Please add the runner user to the docker group."
+#           echo "Run: sudo usermod -aG docker $USER and restart the runner."
+#           exit 1
+#         fi
+
+#     - name: Check out the repository
+#       uses: actions/checkout@v2
+
+#     - name: Set up Docker in Docker
+#       run: |
+#         # Use sudo to ensure access
+#         sudo docker version || true  # Ignore errors if Docker is not yet available
+
+#     - name: Build Docker Image
+#       id: build_image
+#       run: |
+#         IMAGE_NAME=${{ secrets.MY_IMAGE }}
+#         IMAGE_TAG=${{ secrets.MY_TAG }}
+
+#         # Use sudo to build the Docker image
+#         sudo docker build -t $IMAGE_NAME:$IMAGE_TAG .
+
+#         # Get the SHA256 ID of the image
+#         IMAGE_SHA256=$(sudo docker images --no-trunc | grep "$IMAGE_NAME" | grep "$IMAGE_TAG" | awk '{print $3}')
+#         echo "Image SHA256: $IMAGE_SHA256"
+
+#         # Set the image SHA256 as an output
+#         echo "::set-output name=image_sha256::$IMAGE_SHA256"
+
+#     - name: Run Docker Container
+#       id: run_container
+#       run: |
+#         IMAGE_NAME=${{ secrets.MY_IMAGE }}
+#         IMAGE_TAG=${{ secrets.MY_TAG }}
+
+#         # Use sudo to run the container
+#         CONTAINER_ID=$(sudo docker run -d $IMAGE_NAME:$IMAGE_TAG)
+
+#         # Get the SHA256 ID of the running container
+#         CONTAINER_SHA256=$(sudo docker inspect --format='{{.Id}}' $CONTAINER_ID)
+#         echo "Container SHA256: $CONTAINER_SHA256"
+
+#         # Set the container SHA256 as an output
+#         echo "::set-output name=container_sha256::$CONTAINER_SHA256"
+
+#     - name: Compare SHA256 IDs
+#       run: |
+#         if [ "${{ steps.build_image.outputs.image_sha256 }}" == "${{ steps.run_container.outputs.container_sha256 }}" ]; then
+#             echo "SHA256 IDs match. Running the container as an agent."
+#             echo "Hurrah! We did it. Proceeding to the next stage :)"
+#         else
+#             echo "SHA256 IDs do not match. Failing the pipeline."
+#             exit 1
+#         fi
+
+
+
+
+
+
+
+
+
+name: CI Pipeline in Docker
 
 on:
   push:
     branches:
-      - dev
+      - main  # Change this to your desired branch
+  pull_request:
 
 jobs:
-  verify-and-run:
-    runs-on: self-hosted  # Use a self-hosted runner
-
-    container:
-      image: docker:dind  # Use the Docker-in-Docker image
-      options: --privileged  # Allow privileged access
-      volumes:
-        - /var/run/docker.sock:/var/run/docker.sock  # Mount Docker socket from host to container
+  build:
+    runs-on: ubuntu-latest
 
     steps:
-    - name: Check Docker Group Membership
-      run: |
-        if groups $USER | grep &>/dev/null '\bdocker\b'; then
-          echo "$USER is part of the docker group."
-        else
-          echo "$USER is NOT part of the docker group. Please add the runner user to the docker group."
-          echo "Run: sudo usermod -aG docker $USER and restart the runner."
-          exit 1
-        fi
+      - name: Checkout Repository
+        uses: actions/checkout@v2
 
-    - name: Check out the repository
-      uses: actions/checkout@v2
+      - name: Build Docker Image
+        id: build-image
+        run: |
+          IMAGE_NAME="myapp"  # Change to your desired image name
+          docker build -t $IMAGE_NAME .
 
-    - name: Set up Docker in Docker
-      run: |
-        # Use sudo to ensure access
-        sudo docker version || true  # Ignore errors if Docker is not yet available
+          # Get the SHA256 ID of the built image
+          IMAGE_SHA=$(docker inspect --format='{{index .RepoDigests 0}}' $IMAGE_NAME | cut -d'@' -f2)
+          echo "Image SHA256: $IMAGE_SHA"
 
-    - name: Build Docker Image
-      id: build_image
-      run: |
-        IMAGE_NAME=${{ secrets.MY_IMAGE }}
-        IMAGE_TAG=${{ secrets.MY_TAG }}
+          # Save the image SHA256 ID as an output variable
+          echo "::set-output name=image_sha::$IMAGE_SHA"
 
-        # Use sudo to build the Docker image
-        sudo docker build -t $IMAGE_NAME:$IMAGE_TAG .
+  run-container:
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v2
 
-        # Get the SHA256 ID of the image
-        IMAGE_SHA256=$(sudo docker images --no-trunc | grep "$IMAGE_NAME" | grep "$IMAGE_TAG" | awk '{print $3}')
-        echo "Image SHA256: $IMAGE_SHA256"
+      - name: Run Docker Container
+        id: run-container
+        run: |
+          IMAGE_NAME="myapp"  # Same image name as before
+          IMAGE_SHA="${{ needs.build.outputs.image_sha }}"
+          
+          # Run the container
+          CONTAINER_ID=$(docker run -d $IMAGE_NAME)
+          
+          # Get the SHA256 ID of the running container
+          CONTAINER_SHA=$(docker inspect --format='{{index .RepoDigests 0}}' $CONTAINER_ID | cut -d'@' -f2)
+          echo "Container SHA256: $CONTAINER_SHA"
+          
+          # Save the container SHA256 ID as an output variable
+          echo "::set-output name=container_sha::$CONTAINER_SHA"
 
-        # Set the image SHA256 as an output
-        echo "::set-output name=image_sha256::$IMAGE_SHA256"
+  validate:
+    runs-on: ubuntu-latest
+    needs: run-container
+    steps:
+      - name: Validate SHA256 IDs
+        run: |
+          IMAGE_SHA="${{ needs.build.outputs.image_sha }}"
+          CONTAINER_SHA="${{ needs.run-container.outputs.container_sha }}"
 
-    - name: Run Docker Container
-      id: run_container
-      run: |
-        IMAGE_NAME=${{ secrets.MY_IMAGE }}
-        IMAGE_TAG=${{ secrets.MY_TAG }}
+          echo "Validating SHA256 IDs..."
+          echo "Image SHA: $IMAGE_SHA"
+          echo "Container SHA: $CONTAINER_SHA"
 
-        # Use sudo to run the container
-        CONTAINER_ID=$(sudo docker run -d $IMAGE_NAME:$IMAGE_TAG)
-
-        # Get the SHA256 ID of the running container
-        CONTAINER_SHA256=$(sudo docker inspect --format='{{.Id}}' $CONTAINER_ID)
-        echo "Container SHA256: $CONTAINER_SHA256"
-
-        # Set the container SHA256 as an output
-        echo "::set-output name=container_sha256::$CONTAINER_SHA256"
-
-    - name: Compare SHA256 IDs
-      run: |
-        if [ "${{ steps.build_image.outputs.image_sha256 }}" == "${{ steps.run_container.outputs.container_sha256 }}" ]; then
-            echo "SHA256 IDs match. Running the container as an agent."
-            echo "Hurrah! We did it. Proceeding to the next stage :)"
-        else
-            echo "SHA256 IDs do not match. Failing the pipeline."
+          if [ "$IMAGE_SHA" != "$CONTAINER_SHA" ]; then
+            echo "SHA256 IDs do not match! Failing the pipeline."
             exit 1
-        fi
+          else
+            echo "SHA256 IDs match. Continuing the pipeline."
+          fi
