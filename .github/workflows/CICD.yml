@@ -1,47 +1,47 @@
-name: Validate VM UUID, Build, Push, and Validate Docker Imagee
+# name: Validate VM UUID, Build, Push, and Validate Docker Imagee
 
-# on:
-#   push:
-#     branches:
-#       - main
+# # on:
+# #   push:
+# #     branches:
+# #       - main
 
-jobs:
-  # Step 1: Validate VM UUID
-  validate-uuid:
-    runs-on: [self-hosted, linux-runner]
-    steps:
-      - name: Clean up faulty Azure CLI sources
-        run: |
-          sudo rm -f /etc/apt/sources.list.d/azure-cli.list
-          sudo rm -f /etc/apt/sources.list.d/azure-cli.sources
+# jobs:
+#   # Step 1: Validate VM UUID
+#   validate-uuid:
+#     runs-on: [self-hosted, linux-runner]
+#     steps:
+#       - name: Clean up faulty Azure CLI sources
+#         run: |
+#           sudo rm -f /etc/apt/sources.list.d/azure-cli.list
+#           sudo rm -f /etc/apt/sources.list.d/azure-cli.sources
 
-      - name: Install Azure CLI
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y apt-transport-https ca-certificates curl gnupg lsb-release
-          curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
+#       - name: Install Azure CLI
+#         run: |
+#           sudo apt-get update
+#           sudo apt-get install -y apt-transport-https ca-certificates curl gnupg lsb-release
+#           curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
 
-      - name: Log in to Azure
-        uses: azure/login@v1
-        with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
+#       - name: Log in to Azure
+#         uses: azure/login@v1
+#         with:
+#           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      - name: Get VM Name from Hostname
-        run: |
-          VM_NAME=$(cat /etc/hostname)
-          echo "VM_NAME=${VM_NAME}" >> $GITHUB_ENV
+#       - name: Get VM Name from Hostname
+#         run: |
+#           VM_NAME=$(cat /etc/hostname)
+#           echo "VM_NAME=${VM_NAME}" >> $GITHUB_ENV
 
-      - name: Check Azure VM UUID
-        run: |
-          EXPECTED_UUID="${{ secrets.EXPECTED_UUID }}"
-          CURRENT_UUID=$(sudo dmidecode | grep UUID | awk '{print $2}')
+#       - name: Check Azure VM UUID
+#         run: |
+#           EXPECTED_UUID="${{ secrets.EXPECTED_UUID }}"
+#           CURRENT_UUID=$(sudo dmidecode | grep UUID | awk '{print $2}')
 
-          if [[ "$CURRENT_UUID" != "$EXPECTED_UUID" ]]; then
-            echo "Error: VM UUID does not match. Aborting."
-            exit 1
-          else
-            echo "VM UUID matches. Proceeding..."
-          fi
+#           if [[ "$CURRENT_UUID" != "$EXPECTED_UUID" ]]; then
+#             echo "Error: VM UUID does not match. Aborting."
+#             exit 1
+#           else
+#             echo "VM UUID matches. Proceeding..."
+#           fi
 
   # # Step 2: Build, Push, Sign, and Get SHA of Docker Image
   # build-and-push:
