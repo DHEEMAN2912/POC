@@ -89,7 +89,7 @@ jobs:
     runs-on: ubuntu-latest
     container:
       image: node:14.15.0-alpine3.12
-      steps:
+    steps:
          - name: Log the parent container node version
            run: |
              node -v 
