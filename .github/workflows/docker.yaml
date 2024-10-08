@@ -3,7 +3,7 @@ name: Container Agent Pipeline
 on:
   push:
     branches:
-      - main
+      - dev
 
 jobs:
   verify-and-run:
