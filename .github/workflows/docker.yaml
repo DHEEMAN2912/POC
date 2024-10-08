@@ -1,4 +1,4 @@
-name: Container Agent Pipeline
+name: Docker Container SHA256 Check with Dynamic SHA256
 
 on:
   push:
@@ -6,59 +6,62 @@ on:
       - main
 
 jobs:
-  verify-and-run:
-    runs-on: ubuntu-latest  # This specifies the environment for the job; it still runs in a container.
-
-    container:
-      image: test:latest  # Specify the Docker image you want to use
-
+  docker_job:
+    runs-on: ubuntu-latest
+    
     steps:
-    - name: Check out the repository
-      uses: actions/checkout@v2
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-    - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v1
+      - name: Build Docker image (Zero Trust)
+        id: build_image
+        run: |
+          IMAGE_TAG="my-sample-image:latest"
+          # Build the Docker image
+          docker build -t $IMAGE_TAG .
 
-    - name: Build Docker Image
-      id: build_image
-      run: |
-        IMAGE_NAME="test"
-        IMAGE_TAG="latest"
+          # Get the image SHA256 hash after building the image
+          IMAGE_SHA256=$(docker inspect --format='{{.Id}}' $IMAGE_TAG)
+          echo "Built image SHA256: $IMAGE_SHA256"
+          
+          # Output the SHA256 to be used in later steps
+          echo "image_sha256=$IMAGE_SHA256" >> $GITHUB_ENV
 
-        # Build the image
-        docker build -t $IMAGE_NAME:$IMAGE_TAG .
+      - name: Log in to Docker Hub
+        run: |
+          echo "${{ secrets.DOCKER_PASSWORD }}" | docker login --username "${{ secrets.DOCKER_USERNAME }}" --password-stdin
 
-        # Get the SHA256 ID of the image
-        IMAGE_SHA256=$(docker images --no-trunc | grep "$IMAGE_NAME" | grep "$IMAGE_TAG" | awk '{print $3}')
-        echo "Image SHA256: $IMAGE_SHA256"
+      - name: Tag Docker image
+        run: |
+          docker tag my-sample-image ${{ secrets.DOCKER_USERNAME }}/my-sample-image:latest
 
-        # Set the image SHA256 as an output
-        echo "::set-output name=image_sha256::$IMAGE_SHA256"
+      - name: Push Docker image to Docker Hub
+        run: |
+          docker push ${{ secrets.DOCKER_USERNAME }}/my-sample-image:latest
 
-    - name: Run Docker Container
-      id: run_container
-      run: |
-        IMAGE_NAME="test"
-        IMAGE_TAG="latest"
+      - name: Run Docker container from pushed image
+        run: |
+          docker run -d --name my-sample-container ${{ secrets.DOCKER_USERNAME }}/my-sample-image:latest
 
-        # Run the container
-        CONTAINER_ID=$(docker run -d $IMAGE_NAME:$IMAGE_TAG)
+      - name: Inspect Docker container
+        id: inspect_container
+        run: |
+          CONTAINER_SHA256=$(docker inspect --format='{{.Image}}' my-sample-container)
+          echo "Container SHA256: $CONTAINER_SHA256"
+          echo "container_sha256=$CONTAINER_SHA256" >> $GITHUB_ENV
 
-        # Get the SHA256 ID of the container
-        CONTAINER_SHA256=$(docker inspect --format='{{.Id}}' $CONTAINER_ID)
-        echo "Container SHA256: $CONTAINER_SHA256"
+      - name: Compare image SHA256 with container SHA256 (Zero Trust)
+        run: |
+          IMAGE_SHA256="${{ env.image_sha256 }}"
+          CONTAINER_SHA256="${{ env.container_sha256 }}"
+          
+          echo "Built image SHA256: $IMAGE_SHA256"
+          echo "Container SHA256: $CONTAINER_SHA256"
 
-        # Set the container SHA256 as an output
-        echo "::set-output name=container_sha256::$CONTAINER_SHA256"
-
-    - name: Compare SHA256 IDs
-      run: |
-        if [ "${{ steps.build_image.outputs.image_sha256 }}" == "${{ steps.run_container.outputs.container_sha256 }}" ]; then
-            echo "SHA256 IDs match. Running the container as an agent."
-            # Add logic to run your tasks inside the container here
-        else
-            echo "SHA256 IDs do not match. Failing the pipeline."
+          # Compare the two SHA256 hashes
+          if [ "$IMAGE_SHA256" == "$CONTAINER_SHA256" ]; then
+            echo "SHA256 matches. Success."
+          else
+            echo "SHA256 does not match. Failing pipeline."
             exit 1
-        fi
-
-    # Additional steps to run tasks in the container
+          fi
