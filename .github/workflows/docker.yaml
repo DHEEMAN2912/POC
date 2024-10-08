@@ -89,7 +89,7 @@ name: CI Pipeline in Docker
 on:
   push:
     branches:
-      - main  # Change this to your desired branch
+      - dev  # Change this to your desired branch
   pull_request:
 
 jobs:
