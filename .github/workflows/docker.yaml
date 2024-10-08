@@ -81,84 +81,31 @@
 
 
 
-
-name: CI Pipeline in Docker
-
-on:
-  push:
-    branches:
-      - dev  # Change this to your desired branch
-
+name: container
+on: push
 
 jobs:
-  build:
-    runs-on: ubuntu-latest  # This step will just be for building, but all subsequent steps will run in a Docker container.
+  node-docker:
+    runs-on: ubuntu-latest
+    container:
+      image: node:14.15.0-alpine3.12
+      steps:
+         - name: Log the parent container node version
+           run: |
+             node -v 
+           # Echo the node version of the parent container
 
-    steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v2
 
-      - name: Build Docker Image
-        id: build-image
-        run: |
-          IMAGE_NAME="myapp"  # Change to your desired image name
-          docker build -t $IMAGE_NAME .
+         - name: Log the step container node version
+           uses: docker://node:12.14.1-alpine3.10
+           with:
+             entrypoint: usr/local/bin/echo
+             args: -v
+            # Echo the node version of this step container based on this 12.14.1-alpine3.10 image
 
-          # Get the SHA256 ID of the built image
-          IMAGE_SHA=$(docker inspect --format='{{index .RepoDigests 0}}' $IMAGE_NAME | cut -d'@' -f2)
-          echo "Image SHA256: $IMAGE_SHA"
 
-          # Save the image SHA256 ID as an output variable
-          echo "::set-output name=image_sha::$IMAGE_SHA"
-
-  run-container:
-    runs-on: ubuntu-latest  # Still using Ubuntu just to orchestrate the steps
-    needs: build
-    steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v2
-
-      - name: Run Tests in Docker Container
-        id: run-container
-        run: |
-          IMAGE_NAME="myapp"  # Same image name as before
-          IMAGE_SHA="${{ needs.build.outputs.image_sha }}"
-
-          # Run the container from the image and execute commands inside it
-          CONTAINER_ID=$(docker run -d $IMAGE_NAME)
-
-          # Capture the container SHA256 ID
-          CONTAINER_SHA=$(docker inspect --format='{{index .RepoDigests 0}}' $CONTAINER_ID | cut -d'@' -f2)
-          echo "Container SHA256: $CONTAINER_SHA"
-
-          # Save the container SHA256 ID as an output variable
-          echo "::set-output name=container_sha::$CONTAINER_SHA"
-
-          # Clean up the container
-          docker stop $CONTAINER_ID
-          docker rm $CONTAINER_ID
-
-  validate:
-    runs-on: ubuntu-latest  # Final job to validate SHA256 IDs
-    needs: run-container
-    steps:
-      - name: Validate SHA256 IDs
-        run: |
-          IMAGE_SHA="${{ needs.build.outputs.image_sha }}"
-          CONTAINER_SHA="${{ needs.run-container.outputs.container_sha }}"
-
-          echo "Validating SHA256 IDs..."
-          echo "Image SHA: $IMAGE_SHA"
-          echo "Container SHA: $CONTAINER_SHA"
-
-          if [ "$IMAGE_SHA" != "$CONTAINER_SHA" ]; then
-            echo "SHA256 IDs do not match! Failing the pipeline."
-            exit 1
-          else
-            echo "SHA256 IDs match. Continuing the pipeline."
-          fi
-
-            exit 1
-          else
-            echo "SHA256 IDs match. Continuing the pipeline."
-          fi
+         - name: Step with docker to echo a string
+           uses: docker://node:12.14.1-alpine3.10
+           with:
+             entrypoint: /bin/echo
+             args: Hello Docker !
