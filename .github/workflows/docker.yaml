@@ -13,13 +13,15 @@ jobs:
     container:
       image: docker:latest  # Use the Docker image you want (here we use Docker for build/run)
       options: --privileged  # To allow Docker to run inside the container (Docker in Docker)
+      volumes:
+        - /var/run/docker.sock:/var/run/docker.sock  # Mount Docker socket from host to container
+
 
     steps:
-    - name: Set up Docker in Docker environment
+    - name: Set up Docker in Docker 
       run: |
-        # Install Docker
-        apk add --no-cache docker
-        service docker start
+         # Ensure Docker is running correctly
+          docker version
 
     - name: Check out the repository
       uses: actions/checkout@v2
