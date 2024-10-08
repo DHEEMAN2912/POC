@@ -1,4 +1,4 @@
-name: Container Agent Pipeline
+name: Build and Verify Container
 
 on:
   push:
@@ -7,25 +7,30 @@ on:
 
 jobs:
   verify-and-run:
-    runs-on: ubuntu-latest  # This specifies the environment for the job; it still runs in a container.
+    # Specify 'runs-on' with a container by defining the container in the 'container' block
+    runs-on: [self-hosted, linux-runner]  # This starts the job on a VM, but will run the job in the container below
 
     container:
-      image: test:latest  # Specify the Docker image you want to use
+      image: docker:latest  # Use the Docker image you want (here we use Docker for build/run)
+      options: --privileged  # To allow Docker to run inside the container (Docker in Docker)
 
     steps:
+    - name: Set up Docker in Docker environment
+      run: |
+        # Install Docker
+        apk add --no-cache docker
+        service docker start
+
     - name: Check out the repository
       uses: actions/checkout@v2
-
-    - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v1
 
     - name: Build Docker Image
       id: build_image
       run: |
-        IMAGE_NAME="test"
-        IMAGE_TAG="latest"
+        IMAGE_NAME=${{ secrets.MY_IMAGE }}
+        IMAGE_TAG==${{ secrets.MY_TAG }}
 
-        # Build the image
+        # Build the Docker image from the Dockerfile in your repository
         docker build -t $IMAGE_NAME:$IMAGE_TAG .
 
         # Get the SHA256 ID of the image
@@ -38,13 +43,13 @@ jobs:
     - name: Run Docker Container
       id: run_container
       run: |
-        IMAGE_NAME="test"
-        IMAGE_TAG="latest"
+        IMAGE_NAME=${{ secrets.MY_IMAGE }}
+        IMAGE_TAG=${{ secrets.MY_TAG }}
 
-        # Run the container
+        # Run the container from the built image
         CONTAINER_ID=$(docker run -d $IMAGE_NAME:$IMAGE_TAG)
 
-        # Get the SHA256 ID of the container
+        # Get the SHA256 ID of the running container
         CONTAINER_SHA256=$(docker inspect --format='{{.Id}}' $CONTAINER_ID)
         echo "Container SHA256: $CONTAINER_SHA256"
 
@@ -55,7 +60,7 @@ jobs:
       run: |
         if [ "${{ steps.build_image.outputs.image_sha256 }}" == "${{ steps.run_container.outputs.container_sha256 }}" ]; then
             echo "SHA256 IDs match. Running the container as an agent."
-            # Add logic to run your tasks inside the container here
+            echo "hurrey!!! we did it.Procedding for new stage:)"
         else
             echo "SHA256 IDs do not match. Failing the pipeline."
             exit 1
