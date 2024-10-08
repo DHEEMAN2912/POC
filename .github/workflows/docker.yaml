@@ -78,85 +78,70 @@
 
 
 
-
-name: CI Pipeline in Docker
+name: Docker Container SHA256 Check with Dynamic SHA256
 
 on:
   push:
     branches:
-      - dev  # Change this to your desired branch
-
+      - dev
 
 jobs:
-  build:
+  docker_job:
     runs-on: ubuntu-latest
-
+    
     steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v2
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-      - name: Build Docker Image
-        id: build-image
+      - name: Build Docker image (Zero Trust)
+        id: build_image
         run: |
-          IMAGE_NAME="test"  # Name of the Docker image
+          IMAGE_TAG="my-sample-image:latest"
+          # Build the Docker image
+          docker build -t $IMAGE_TAG .
+
+          # Get the image SHA256 hash after building the image
+          IMAGE_SHA256=$(docker inspect --format='{{.Id}}' $IMAGE_TAG)
+          echo "Built image SHA256: $IMAGE_SHA256"
           
-          # Build the Docker image from the Dockerfile in the repository
-          docker build -t $IMAGE_NAME .
+          # Output the SHA256 to be used in later steps
+          echo "image_sha256=$IMAGE_SHA256" >> $GITHUB_ENV
 
-          # Get the SHA256 ID of the built image
-          IMAGE_SHA=$(docker inspect --format='{{index .RepoDigests 0}}' $IMAGE_NAME | cut -d'@' -f2)
-          echo "Image SHA256: $IMAGE_SHA"
-
-          # Save the image SHA256 ID as an environment variable for later use
-          echo "IMAGE_SHA=$IMAGE_SHA" >> $GITHUB_ENV
-
-  run-container:
-    runs-on: ubuntu-latest
-    needs: build
-    steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v2
-
-      - name: List Docker Images
-        run: docker images  # List available images to verify the build
-
-      - name: Run Container from Built Image
-        id: run-container
+      - name: Log in to Docker Hub
         run: |
-          IMAGE_NAME="myapp"  # Same image name as before
-          IMAGE_SHA="${{ env.IMAGE_SHA }}"  # Access the image SHA from the previous job
+          echo "${{ secrets.DOCKER_PASSWORD }}" | docker login --username "${{ secrets.DOCKER_USERNAME }}" --password-stdin
 
-          # Run the container from the built image
-          echo "Running container from image $IMAGE_NAME"
-          CONTAINER_ID=$(docker run -d $IMAGE_NAME)
-
-          # Capture the container SHA256 ID
-          CONTAINER_SHA=$(docker inspect --format='{{index .RepoDigests 0}}' $CONTAINER_ID | cut -d'@' -f2)
-          echo "Container SHA256: $CONTAINER_SHA"
-
-          # Save the container SHA256 ID as an environment variable for later use
-          echo "CONTAINER_SHA=$CONTAINER_SHA" >> $GITHUB_ENV
-
-          # Clean up the container
-          docker stop $CONTAINER_ID
-          docker rm $CONTAINER_ID
-
-  validate:
-    runs-on: ubuntu-latest
-    needs: run-container
-    steps:
-      - name: Validate SHA256 IDs
+      - name: Tag Docker image
         run: |
-          IMAGE_SHA="${{ env.IMAGE_SHA }}"  # Access the image SHA from the build job
-          CONTAINER_SHA="${{ env.CONTAINER_SHA }}"  # Access the container SHA from the run-container job
+          docker tag my-sample-image ${{ secrets.DOCKER_USERNAME }}/my-sample-image:latest
 
-          echo "Validating SHA256 IDs..."
-          echo "Image SHA: $IMAGE_SHA"
-          echo "Container SHA: $CONTAINER_SHA"
+      - name: Push Docker image to Docker Hub
+        run: |
+          docker push ${{ secrets.DOCKER_USERNAME }}/my-sample-image:latest
 
-          if [ "$IMAGE_SHA" != "$CONTAINER_SHA" ]; then
-            echo "SHA256 IDs do not match! Failing the pipeline."
-            exit 1
+      - name: Run Docker container from pushed image
+        run: |
+          docker run -d --name my-sample-container ${{ secrets.DOCKER_USERNAME }}/my-sample-image:latest
+
+      - name: Inspect Docker container
+        id: inspect_container
+        run: |
+          CONTAINER_SHA256=$(docker inspect --format='{{.Image}}' my-sample-container)
+          echo "Container SHA256: $CONTAINER_SHA256"
+          echo "container_sha256=$CONTAINER_SHA256" >> $GITHUB_ENV
+
+      - name: Compare image SHA256 with container SHA256 (Zero Trust)
+        run: |
+          IMAGE_SHA256="${{ env.image_sha256 }}"
+          CONTAINER_SHA256="${{ env.container_sha256 }}"
+          
+          echo "Built image SHA256: $IMAGE_SHA256"
+          echo "Container SHA256: $CONTAINER_SHA256"
+
+          # Compare the two SHA256 hashes
+          if [ "$IMAGE_SHA256" == "$CONTAINER_SHA256" ]; then
+            echo "SHA256 matches. Success."
           else
-            echo "SHA256 IDs match. Continuing the pipeline."
+            echo "SHA256 does not match. Failing pipeline."
+            exit 1
           fi
