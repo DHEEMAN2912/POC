@@ -83,7 +83,7 @@ name: Docker Container SHA256 Check with Dynamic SHA256
 on:
   push:
     branches:
-      - dev
+      - main
 
 jobs:
   docker_job:
