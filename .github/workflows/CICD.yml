@@ -1,9 +1,9 @@
 name: Validate VM UUID, Build, Push, and Validate Docker Imagee
 
-on:
-  push:
-    branches:
-      - main
+# on:
+#   push:
+#     branches:
+#       - main
 
 jobs:
   # Step 1: Validate VM UUID
