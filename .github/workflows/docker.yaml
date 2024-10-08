@@ -78,19 +78,17 @@
 
 
 
-
-
 name: CI Pipeline in Docker
 
 on:
   push:
     branches:
       - dev  # Change this to your desired branch
-  
+ 
 
 jobs:
   build:
-    runs-on: ubuntu-latest  # This step will just be for building, but all subsequent steps will run in a Docker container.
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout Repository
@@ -99,7 +97,7 @@ jobs:
       - name: Build Docker Image
         id: build-image
         run: |
-          IMAGE_NAME="test"  # Change to your desired image name
+          IMAGE_NAME="myapp"  # Change to your desired image name
           docker build -t $IMAGE_NAME .
 
           # Get the SHA256 ID of the built image
@@ -110,7 +108,7 @@ jobs:
           echo "::set-output name=image_sha::$IMAGE_SHA"
 
   run-container:
-    runs-on: ubuntu-latest  # Still using Ubuntu just to orchestrate the steps
+    runs-on: ubuntu-latest
     needs: build
     steps:
       - name: Checkout Repository
@@ -122,7 +120,7 @@ jobs:
           IMAGE_NAME="myapp"  # Same image name as before
           IMAGE_SHA="${{ needs.build.outputs.image_sha }}"
 
-          # Run the container from the image and execute commands inside it
+          # Run the container from the built image and execute commands inside it
           CONTAINER_ID=$(docker run -d $IMAGE_NAME)
 
           # Capture the container SHA256 ID
@@ -137,7 +135,7 @@ jobs:
           docker rm $CONTAINER_ID
 
   validate:
-    runs-on: ubuntu-latest  # Final job to validate SHA256 IDs
+    runs-on: ubuntu-latest
     needs: run-container
     steps:
       - name: Validate SHA256 IDs
@@ -155,3 +153,8 @@ jobs:
           else
             echo "SHA256 IDs match. Continuing the pipeline."
           fi
+
+
+
+      
+   
