@@ -7,7 +7,7 @@ on:
 
 jobs:
   verify-and-run:
-    runs-on: [self-hosted, linux-runner]  # Use a self-hosted runner
+    runs-on: self-hosted  # Use a self-hosted runner
 
     container:
       image: docker:dind  # Use the Docker-in-Docker image
@@ -32,7 +32,7 @@ jobs:
     - name: Set up Docker in Docker
       run: |
         # Use sudo to ensure access
-        sudo docker version
+        sudo docker version || true  # Ignore errors if Docker is not yet available
 
     - name: Build Docker Image
       id: build_image
