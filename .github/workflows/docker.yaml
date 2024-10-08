@@ -1,4 +1,4 @@
-name: Build and Verify Containere
+name: Build and Verify Container
 
 on:
   push:
@@ -7,22 +7,32 @@ on:
 
 jobs:
   verify-and-run:
-    runs-on: [self-hosted, linux-runner]  # This starts the job on a VM, but will run the job in the container below
+    runs-on: [self-hosted, linux-runner]  # Use a self-hosted runner
 
     container:
-      image: docker:latest  # Use the Docker image you want (here we use Docker for build/run)
-      options: --privileged  # To allow Docker to run inside the container (Docker in Docker)
+      image: docker:dind  # Use the Docker-in-Docker image
+      options: --privileged  # Allow privileged access
       volumes:
         - /var/run/docker.sock:/var/run/docker.sock  # Mount Docker socket from host to container
 
     steps:
-    - name: Set up Docker in Docker
+    - name: Check Docker Group Membership
       run: |
-        # Use sudo to avoid permission issues
-        sudo docker version
+        if groups $USER | grep &>/dev/null '\bdocker\b'; then
+          echo "$USER is part of the docker group."
+        else
+          echo "$USER is NOT part of the docker group. Please add the runner user to the docker group."
+          echo "Run: sudo usermod -aG docker $USER and restart the runner."
+          exit 1
+        fi
 
     - name: Check out the repository
       uses: actions/checkout@v2
+
+    - name: Set up Docker in Docker
+      run: |
+        # Use sudo to ensure access
+        sudo docker version
 
     - name: Build Docker Image
       id: build_image
