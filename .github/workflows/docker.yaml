@@ -1,4 +1,4 @@
-name: Build and Verify Container
+name: Build and Verify Containere
 
 on:
   push:
