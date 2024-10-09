@@ -72,7 +72,7 @@
 
 
 
-name: Docker Container SHA256 Check with Dynamic SHA256
+name: Docker Container SHA256 Check with Dynamicc SHA256
 
 on:
   push:
