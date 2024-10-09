@@ -82,19 +82,8 @@ on:
 jobs:
   docker_job:
     runs-on: [self-hosted, linux-runner]
-    
     container:
-      image: docker:20.10.7
-      options: --privileged  # Required for Docker-in-Docker
-
-    services:
-      docker:
-        image: docker:20.10.7-dind  # Docker-in-Docker service
-        options: --privileged  # Necessary for Docker operations inside the container
-        ports:
-          - 2375:2375  # Expose Docker daemon port
-        env:
-          DOCKER_TLS_CERTDIR: ""  # Disable TLS for Docker daemon
+      image: node:18
 
     steps:
       - name: Checkout code
