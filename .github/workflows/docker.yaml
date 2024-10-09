@@ -29,3 +29,45 @@ jobs:
 
       - name: Display Image ID
         run: echo "Built Image ID is ${{ env.IMAGE_ID }}"
+
+  # Job 2: Create a container from the built image and capture the container ID
+  run-container:
+    runs-on: ubuntu-latest  # Runs in a containerized environment
+    needs: build-image
+    container:
+      image: docker:latest  # Runs the job inside a Docker container
+    steps:
+      # Step to check out the repository code (if needed)
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # Step to create a container and capture container ID (SHA256)
+      - name: Run Docker Container
+        run: |
+          CONTAINER_ID=$(docker run -d myapp:latest)
+          echo "CONTAINER_ID=${CONTAINER_ID}" >> $GITHUB_ENV  # Store Container ID
+
+      - name: Display Container ID
+        run: echo "Running Container ID is ${{ env.CONTAINER_ID }}"
+
+  # Job 3: Validate that the Image ID matches the Container ID
+  validate-ids:
+    runs-on: ubuntu-latest
+    needs: run-container
+    container:
+      image: docker:latest  # Runs the job inside a Docker container
+    steps:
+      - name: Validate Image ID and Container ID Match
+        run: |
+          IMAGE_ID="${{ env.IMAGE_ID }}"
+          RUNNING_IMAGE_ID=$(docker inspect --format='{{.Image}}' ${{ env.CONTAINER_ID }})
+          
+          echo "Expected Image ID: $IMAGE_ID"
+          echo "Running Image ID: $RUNNING_IMAGE_ID"
+          
+          if [[ "$RUNNING_IMAGE_ID" != "$IMAGE_ID" ]]; then
+            echo "Error: Image ID and Container Image ID do not match."
+            exit 1
+          else
+            echo "Image ID and Container Image ID match. Proceeding with the pipeline..."
+          fi
