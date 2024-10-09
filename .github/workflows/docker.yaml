@@ -72,7 +72,7 @@
 
 
 
-name: Docker Container SHA256 Check with Dynamicc SHA256
+name: Docker Container SHA256 Check with Dynamic SHA256
 
 on:
   push:
@@ -84,18 +84,11 @@ jobs:
     runs-on: [self-hosted, linux-runner]
     container:
       image: node:18
+      options: --volume /var/run/docker.sock:/var/run/docker.sock  # Bind mount the Docker socket
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
-
-      - name: Set up Docker environment
-        run: |
-          # Set Docker to communicate over the correct host
-          export DOCKER_HOST=tcp://localhost:2375
-          
-          # Wait until Docker daemon is running
-          timeout 60 sh -c "until docker info; do echo 'Waiting for Docker to start...'; sleep 3; done"
 
       - name: Build Docker image (Zero Trust)
         id: build_image
@@ -111,3 +104,4 @@ jobs:
           
           # Output the SHA256 to be used in later steps
           echo "image_sha256=$IMAGE_SHA256" >> $GITHUB_ENV
+
