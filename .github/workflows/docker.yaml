@@ -82,9 +82,9 @@ on:
 jobs:
   docker_job:
     runs-on: [self-hosted, linux-runner]
-    container:
-      image: node:18
-      options: --volume /var/run/docker.sock:/var/run/docker.sock  # Bind mount the Docker socket
+    # container:
+    #   image: node:18
+    #   options: --volume /var/run/docker.sock:/var/run/docker.sock  # Bind mount the Docker socket
 
     steps:
       - name: Checkout code
