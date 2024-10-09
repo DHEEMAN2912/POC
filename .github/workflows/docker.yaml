@@ -72,12 +72,6 @@
 
 
 
-
-
-
-
-
-
 name: Docker Container SHA256 Check with Dynamic SHA256
 
 on:
@@ -89,40 +83,42 @@ jobs:
   docker_job:
     runs-on: [self-hosted, linux-runner]
     
-    container: 
-      image: docker:20.10.7-dind  # Docker-in-Docker image
-      options: --privileged  # Necessary for DinD to function
+    container:
+      image: docker:20.10.7
+      options: --privileged  # Required for Docker-in-Docker
 
     services:
       docker:
-        image: docker:20.10.7-dind
-        options: --privileged  # Enable DinD mode
+        image: docker:20.10.7-dind  # Docker-in-Docker service
+        options: --privileged  # Necessary for Docker operations inside the container
         ports:
-          - 2375:2375  # Expose the Docker daemon port
+          - 2375:2375  # Expose Docker daemon port
         env:
-          DOCKER_TLS_CERTDIR: ""  # Disable TLS to connect to the Docker daemon
+          DOCKER_TLS_CERTDIR: ""  # Disable TLS for Docker daemon
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Set up Docker
+      - name: Set up Docker environment
         run: |
-          # Setup Docker environment
-          export DOCKER_HOST="tcp://localhost:2375"
-          docker info
+          # Set Docker to communicate over the correct host
+          export DOCKER_HOST=tcp://localhost:2375
+          
+          # Wait until Docker daemon is running
+          timeout 60 sh -c "until docker info; do echo 'Waiting for Docker to start...'; sleep 3; done"
 
       - name: Build Docker image (Zero Trust)
         id: build_image
         run: |
           IMAGE_TAG="my-sample-image:latest"
+          
           # Build the Docker image
           docker build -t $IMAGE_TAG .
-
+          
           # Get the image SHA256 hash after building the image
           IMAGE_SHA256=$(docker inspect --format='{{.Id}}' $IMAGE_TAG)
           echo "Built image SHA256: $IMAGE_SHA256"
           
           # Output the SHA256 to be used in later steps
           echo "image_sha256=$IMAGE_SHA256" >> $GITHUB_ENV
-
