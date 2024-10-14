@@ -1,126 +1,35 @@
+name: Validate Docker Container SHA256 ID
 
-# name: Capture and Validate Container ID
-
-# on:
-#   push:
-#     branches:
-#       - main
-
-# jobs:
-#   capture-and-validate-container-id:
-#     runs-on: ubuntu-latest
-#     container:
-#       image: dheeman29/my-sample-image  # Use your custom Docker image
-#     steps:
-#       # Step 1: Checkout code
-#       - name: Checkout code
-#         uses: actions/checkout@v3
-
-#       # Step 2: Install curl, jq, and openssl
-#       - name: Install Packages
-#         run: |
-#           apt-get update
-#           apt-get install -y curl jq openssl
-
-#       # Step 3: Capture current container ID
-#       - name: Capture Container ID
-#         run: |
-#           CONTAINER_ID=$(cat /proc/self/cgroup | grep 'docker' | sed 's/^.*\///' | tail -n1)
-#           echo "Running Container ID is: $CONTAINER_ID"
-#           echo "CONTAINER_ID=${CONTAINER_ID}" >> $GITHUB_ENV
-
-#       # Step 4: Update GitHub Secret with Container ID using the GitHub API
-#       - name: Update GitHub Secret with Container ID
-#         env:
-#           PAT_TOKEN: ${{ secrets.PAT_TOKEN }}  # GitHub Personal Access Token
-#           REPO: ${{ github.repository }}       # Owner/Repo name
-#           CONTAINER_ID: ${{ env.CONTAINER_ID }}
-#         run: |
-#           echo "Updating GitHub Secret with Container ID..."
-          
-#           # Encrypt the secret value (CONTAINER_ID) using the public key of the repo
-#           RESPONSE=$(curl -s -H "Authorization: token $PAT_TOKEN" https://api.github.com/repos/$REPO/actions/secrets/public-key)
-#           PUBLIC_KEY=$(echo $RESPONSE | jq -r .key)
-#           KEY_ID=$(echo $RESPONSE | jq -r .key_id)
-
-#           # Save the public key to a temporary file
-#           echo "$PUBLIC_KEY" | base64 -d > public_key.pem
-
-#           # Encrypt the value using the public key
-#           ENCRYPTED_VALUE=$(echo -n "$CONTAINER_ID" | openssl rsautl -encrypt -pubin -inkey public_key.pem | base64)
-
-#           # Clean up the public key file
-#           rm public_key.pem
-
-#           # Update the secret
-#           curl -X PUT -H "Authorization: token $PAT_TOKEN" \
-#             -H "Content-Type: application/json" \
-#             -d "{\"encrypted_value\":\"$ENCRYPTED_VALUE\",\"key_id\":\"$KEY_ID\"}" \
-#             https://api.github.com/repos/$REPO/actions/secrets/EXPECTED_CONTAINER_ID
-
-#       # Step 5: Validate Container ID
-#       - name: Validate Container ID
-#         run: |
-#           EXPECTED_CONTAINER_ID="${{ secrets.EXPECTED_CONTAINER_ID }}"
-#           CURRENT_CONTAINER_ID="${{ env.CONTAINER_ID }}"
-
-#           echo "Expected Container ID: $EXPECTED_CONTAINER_ID"
-#           echo "Current Container ID: $CURRENT_CONTAINER_ID"
-
-#           if [[ "$CURRENT_CONTAINER_ID" != "$EXPECTED_CONTAINER_ID" ]]; then
-#             echo "Error: Container ID does not match!"
-#             exit 1
-#           else
-#             echo "Container ID matches. Proceeding with pipeline..."
-#           fi
-
-
-
-
-
-
-
-
-
-
-
-
-name: container-workflow
-on: push
+on:
+  push:
+    branches:
+      - main
 
 jobs:
-  capture-container:
+  validate-container:
     runs-on: ubuntu-latest
-    services:
-      docker:
-        image: docker:20.10.7-dind
-        options: --privileged  # Required for Docker-in-Docker
-    container:
-      image: node:14.15.0-alpine3.12
+    container: dheeman29/go-web-app
     steps:
-      # Step to install Docker CLI inside the container
-      - name: Install Docker CLI
-        run: apk add --no-cache docker-cli
-
-      # Step to capture the SHA256 container ID
-      - name: Capture Container SHA256 ID
+      # Step 1: Capture Docker Container SHA256 ID
+      - name: Capture Docker Container SHA256 ID
         run: |
-          CONTAINER_SHA256=$(docker inspect --format='{{.Id}}' $(hostname))
+          CONTAINER_SHA256=$(cat /proc/self/cgroup | grep "docker" | sed 's/^.*\///' | tail -n1)
           echo "Captured Container SHA256 ID: $CONTAINER_SHA256"
           echo "CONTAINER_SHA256=$CONTAINER_SHA256" >> $GITHUB_ENV
 
-      # Validation step (optional)
-      - name: Validate Container SHA256 ID
+      # Step 2: Validate Docker Container SHA256 ID
+      - name: Validate Docker Container SHA256 ID
         run: |
-          if [[ "$CONTAINER_SHA256" == "${{ secrets.CONTAINER_SHA256 }}" ]]; then
-            echo "Validated: Container SHA256 ID matches!"
-          else
-            echo "Validation failed: Container SHA256 ID does not match!"
+          EXPECTED_CONTAINER_SHA256="${{ secrets.CONTAINER_SHA256 }}"
+          if [[ "$CONTAINER_SHA256" != "$EXPECTED_CONTAINER_SHA256" ]]; then
+            echo "Error: Docker Container SHA256 ID does not match. Aborting."
             exit 1
+          else
+            echo "Docker Container SHA256 ID matches. Proceeding..."
           fi
 
-      # Log Node version and OS release
-      - name: Log Node Version and OS Release
+      # Step 3: Log Node version and OS release
+      - name: Log the Node version and OS release
         run: |
           node -v
           cat /etc/os-release
