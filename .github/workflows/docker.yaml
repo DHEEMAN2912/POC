@@ -1,4 +1,81 @@
-name: Build, Validate Docker Image and Container
+# name: Build, Validate Docker Image and Container
+
+# on:
+#   push:
+#     branches:
+#       - main
+
+# jobs:
+#   build-and-validate:
+#     runs-on: ubuntu-latest
+#     container:
+#       image: docker:latest  # Running in a containerized environment
+#     steps:
+#       # Step 1: Checkout the code
+#       - name: Checkout code
+#         uses: actions/checkout@v3
+
+#       # Step 2: Set up Docker environment
+#       - name: Set up Docker Buildx
+#         uses: docker/setup-buildx-action@v2
+
+#       # Step 3: Use Docker image name and tag from secrets
+#       - name: Set Image Name and Tag from Secrets
+#         run: |
+#           echo "IMAGE_NAME=${{ secrets.DOCKER_IMAGE_NAME }}" >> $GITHUB_ENV
+#           echo "IMAGE_TAG=${{ secrets.DOCKER_IMAGE_TAG }}" >> $GITHUB_ENV
+
+#       # Step 4: Build the Docker image and capture the SHA256 digest
+#       - name: Build Docker Image
+#         run: |
+#           docker build --no-cache -t ${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }} .
+#           IMAGE_ID=$(docker inspect --format='{{.ID}}' ${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }})  # Capture the Image ID (SHA256)
+#           echo "IMAGE_ID=${IMAGE_ID}" >> $GITHUB_ENV  # Store Image ID for use in next steps
+
+#       # Step 5: Display the built image's SHA256 ID
+#       - name: Display Image ID
+#         run: echo "Built Image ID is ${{ env.IMAGE_ID }}"
+
+#       # Step 6: Run a container from the image and capture the container's SHA256 ID
+#       - name: Run Docker Container
+#         run: |
+#           CONTAINER_ID=$(docker run -d ${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }})
+#           echo "CONTAINER_ID=${CONTAINER_ID}" >> $GITHUB_ENV  # Store Container ID
+
+#       # Step 7: Display the running container's ID
+#       - name: Display Container ID
+#         run: echo "Running Container ID is ${{ env.CONTAINER_ID }}"
+
+#       # Step 8: Validate that the Image ID matches the Container ID
+#       - name: Validate Image ID and Container ID Match
+#         run: |
+#           IMAGE_ID="${{ env.IMAGE_ID }}"
+#           RUNNING_IMAGE_ID=$(docker inspect --format='{{.Image}}' ${{ env.CONTAINER_ID }})
+          
+#           echo "Expected Image ID: $IMAGE_ID"
+#           echo "Running Image ID: $RUNNING_IMAGE_ID"
+          
+#           if [[ "$RUNNING_IMAGE_ID" != "$IMAGE_ID" ]]; then
+#             echo "Error: Image ID and Container Image ID do not match."
+#             exit 1
+#           else
+#             echo "Image ID and Container Image ID match. Proceeding with the pipeline..."
+#           fi
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+name: Capture and Validate Container ID
 
 on:
   push:
@@ -6,58 +83,56 @@ on:
       - main
 
 jobs:
-  build-and-validate:
+  capture-and-validate-container-id:
     runs-on: ubuntu-latest
     container:
-      image: docker:latest  # Running in a containerized environment
+      image: docker:latest  # Running the job inside a Docker container
     steps:
-      # Step 1: Checkout the code
+      # Step 1: Checkout code
       - name: Checkout code
         uses: actions/checkout@v3
 
-      # Step 2: Set up Docker environment
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
-
-      # Step 3: Use Docker image name and tag from secrets
-      - name: Set Image Name and Tag from Secrets
+      # Step 2: Capture current container ID
+      - name: Capture Container ID
         run: |
-          echo "IMAGE_NAME=${{ secrets.DOCKER_IMAGE_NAME }}" >> $GITHUB_ENV
-          echo "IMAGE_TAG=${{ secrets.DOCKER_IMAGE_TAG }}" >> $GITHUB_ENV
+          CONTAINER_ID=$(cat /proc/self/cgroup | grep 'docker' | sed 's/^.*\///' | tail -n1)
+          echo "Running Container ID is: $CONTAINER_ID"
+          echo "CONTAINER_ID=${CONTAINER_ID}" >> $GITHUB_ENV
 
-      # Step 4: Build the Docker image and capture the SHA256 digest
-      - name: Build Docker Image
+      # Step 3: Update GitHub Secret with Container ID using the GitHub API
+      - name: Update GitHub Secret with Container ID
+        env:
+          PAT_TOKEN: ${{ secrets.PAT_TOKEN }}  # GitHub Personal Access Token
+          REPO: ${{ github.repository }}       # Owner/Repo name
+          CONTAINER_ID: ${{ env.CONTAINER_ID }}
         run: |
-          docker build --no-cache -t ${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }} .
-          IMAGE_ID=$(docker inspect --format='{{.ID}}' ${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }})  # Capture the Image ID (SHA256)
-          echo "IMAGE_ID=${IMAGE_ID}" >> $GITHUB_ENV  # Store Image ID for use in next steps
-
-      # Step 5: Display the built image's SHA256 ID
-      - name: Display Image ID
-        run: echo "Built Image ID is ${{ env.IMAGE_ID }}"
-
-      # Step 6: Run a container from the image and capture the container's SHA256 ID
-      - name: Run Docker Container
-        run: |
-          CONTAINER_ID=$(docker run -d ${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }})
-          echo "CONTAINER_ID=${CONTAINER_ID}" >> $GITHUB_ENV  # Store Container ID
-
-      # Step 7: Display the running container's ID
-      - name: Display Container ID
-        run: echo "Running Container ID is ${{ env.CONTAINER_ID }}"
-
-      # Step 8: Validate that the Image ID matches the Container ID
-      - name: Validate Image ID and Container ID Match
-        run: |
-          IMAGE_ID="${{ env.IMAGE_ID }}"
-          RUNNING_IMAGE_ID=$(docker inspect --format='{{.Image}}' ${{ env.CONTAINER_ID }})
+          echo "Updating GitHub Secret with Container ID..."
           
-          echo "Expected Image ID: $IMAGE_ID"
-          echo "Running Image ID: $RUNNING_IMAGE_ID"
-          
-          if [[ "$RUNNING_IMAGE_ID" != "$IMAGE_ID" ]]; then
-            echo "Error: Image ID and Container Image ID do not match."
+          # Encrypt the secret value (CONTAINER_ID) using the public key of the repo
+          RESPONSE=$(curl -s -H "Authorization: token $PAT_TOKEN" https://api.github.com/repos/$REPO/actions/secrets/public-key)
+          PUBLIC_KEY=$(echo $RESPONSE | jq -r .key)
+          KEY_ID=$(echo $RESPONSE | jq -r .key_id)
+          ENCRYPTED_VALUE=$(echo -n "$CONTAINER_ID" | openssl rsautl -encrypt -pubin -inkey <(echo -n $PUBLIC_KEY | base64 -d) | base64)
+
+          # Update the secret
+          curl -X PUT -H "Authorization: token $PAT_TOKEN" \
+            -H "Content-Type: application/json" \
+            -d "{\"encrypted_value\":\"$ENCRYPTED_VALUE\",\"key_id\":\"$KEY_ID\"}" \
+            https://api.github.com/repos/$REPO/actions/secrets/EXPECTED_CONTAINER_ID
+
+      # Step 4: Validate Container ID
+      - name: Validate Container ID
+        run: |
+          EXPECTED_CONTAINER_ID="${{ secrets.EXPECTED_CONTAINER_ID }}"
+          CURRENT_CONTAINER_ID="${{ env.CONTAINER_ID }}"
+
+          echo "Expected Container ID: $EXPECTED_CONTAINER_ID"
+          echo "Current Container ID: $CURRENT_CONTAINER_ID"
+
+          if [[ "$CURRENT_CONTAINER_ID" != "$EXPECTED_CONTAINER_ID" ]]; then
+            echo "Error: Container ID does not match!"
             exit 1
           else
-            echo "Image ID and Container Image ID match. Proceeding with the pipeline..."
+            echo "Container ID matches. Proceeding with pipeline..."
           fi
+
