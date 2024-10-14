@@ -8,13 +8,18 @@ on:
 jobs:
   validate-container:
     runs-on: ubuntu-latest
-    container: 
-      image: dheeman29/go-web-app:10234524538
+    container: dheeman29/go-web-app:10234524538
+
     steps:
       # Step 1: Capture Docker Container SHA256 ID
       - name: Capture Docker Container SHA256 ID
         run: |
-          CONTAINER_SHA256=$(cat /proc/self/cgroup | grep "docker" | sed 's/^.*\///' | tail -n1)
+          # Get the container ID of the running container
+          CONTAINER_ID=$(cat /proc/self/cgroup | grep "docker" | sed 's/^.*\///' | tail -n1)
+          echo "Captured Container ID: $CONTAINER_ID"
+
+          # Get the SHA256 ID of the container
+          CONTAINER_SHA256=$(docker inspect --format='{{.Id}}' $CONTAINER_ID)
           echo "Captured Container SHA256 ID: $CONTAINER_SHA256"
           echo "CONTAINER_SHA256=$CONTAINER_SHA256" >> $GITHUB_ENV
 
