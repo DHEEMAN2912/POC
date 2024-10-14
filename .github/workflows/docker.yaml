@@ -62,8 +62,6 @@
 #             echo "Image ID and Container Image ID match. Proceeding with the pipeline..."
 #           fi
 
-
-
 name: Capture and Validate Container ID
 
 on:
@@ -107,7 +105,15 @@ jobs:
           RESPONSE=$(curl -s -H "Authorization: token $PAT_TOKEN" https://api.github.com/repos/$REPO/actions/secrets/public-key)
           PUBLIC_KEY=$(echo $RESPONSE | jq -r .key)
           KEY_ID=$(echo $RESPONSE | jq -r .key_id)
-          ENCRYPTED_VALUE=$(echo -n "$CONTAINER_ID" | openssl rsautl -encrypt -pubin -inkey <(echo -n $PUBLIC_KEY | base64 -d) | base64)
+
+          # Save the public key to a temporary file
+          echo "$PUBLIC_KEY" | base64 -d > public_key.pem
+
+          # Encrypt the value using the public key
+          ENCRYPTED_VALUE=$(echo -n "$CONTAINER_ID" | openssl rsautl -encrypt -pubin -inkey public_key.pem | base64)
+
+          # Clean up the public key file
+          rm public_key.pem
 
           # Update the secret
           curl -X PUT -H "Authorization: token $PAT_TOKEN" \
@@ -130,14 +136,5 @@ jobs:
           else
             echo "Container ID matches. Proceeding with pipeline..."
           fi
-
-
-
-
-
-
-
-
-
 
 
