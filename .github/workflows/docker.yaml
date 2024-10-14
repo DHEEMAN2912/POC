@@ -86,20 +86,25 @@ jobs:
   capture-and-validate-container-id:
     runs-on: ubuntu-latest
     container:
-      image: docker:latest  # Running the job inside a Docker container
+      image: docker:latest  # Use the official Docker image
     steps:
       # Step 1: Checkout code
       - name: Checkout code
         uses: actions/checkout@v3
 
-      # Step 2: Capture current container ID
+      # Step 2: Install curl, jq, and openssl
+      - name: Install required tools
+        run: |
+          apk add --no-cache curl jq openssl
+
+      # Step 3: Capture current container ID
       - name: Capture Container ID
         run: |
           CONTAINER_ID=$(cat /proc/self/cgroup | grep 'docker' | sed 's/^.*\///' | tail -n1)
           echo "Running Container ID is: $CONTAINER_ID"
           echo "CONTAINER_ID=${CONTAINER_ID}" >> $GITHUB_ENV
 
-      # Step 3: Update GitHub Secret with Container ID using the GitHub API
+      # Step 4: Update GitHub Secret with Container ID using the GitHub API
       - name: Update GitHub Secret with Container ID
         env:
           PAT_TOKEN: ${{ secrets.PAT_TOKEN }}  # GitHub Personal Access Token
@@ -120,7 +125,7 @@ jobs:
             -d "{\"encrypted_value\":\"$ENCRYPTED_VALUE\",\"key_id\":\"$KEY_ID\"}" \
             https://api.github.com/repos/$REPO/actions/secrets/EXPECTED_CONTAINER_ID
 
-      # Step 4: Validate Container ID
+      # Step 5: Validate Container ID
       - name: Validate Container ID
         run: |
           EXPECTED_CONTAINER_ID="${{ secrets.EXPECTED_CONTAINER_ID }}"
@@ -135,4 +140,3 @@ jobs:
           else
             echo "Container ID matches. Proceeding with pipeline..."
           fi
-
