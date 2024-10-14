@@ -81,6 +81,77 @@
 
 
 
+# name: Build, Validate Docker Image and Container
+
+# on:
+#   push:
+#     branches:
+#       - main
+
+# jobs:
+#   build-and-validate:
+#     runs-on: ubuntu-latest
+#     container:
+#       image: docker:latest  # Running in a containerized environment
+#     steps:
+#       # Step 1: Check out the code
+#       - name: Checkout code
+#         uses: actions/checkout@v3
+
+#       # Step 2: Set up Docker environment
+#       - name: Set up Docker Buildx
+#         uses: docker/setup-buildx-action@v2
+
+#       # Step 3: Build the Docker image and capture the SHA256 digest
+#       - name: Build Docker Image
+#         run: |
+#           docker build --no-cache -t myapp:latest .
+#           IMAGE_ID=$(docker inspect --format='{{.ID}}' myapp:latest)  # Capture the Image ID (SHA256)
+#           echo "IMAGE_ID=${IMAGE_ID}" >> $GITHUB_ENV  # Store Image ID for use in next steps
+
+#       # Step 4: Display the built image's SHA256 ID
+#       - name: Display Image ID
+#         run: echo "Built Image ID is ${{ env.IMAGE_ID }}"
+
+#       # Step 5: Run a container from the image and capture the container's SHA256 ID
+#       - name: Run Docker Container
+#         run: |
+#           CONTAINER_ID=$(docker run -d myapp:latest)
+#           echo "CONTAINER_ID=${CONTAINER_ID}" >> $GITHUB_ENV  # Store Container ID
+
+#       # Step 6: Display the running container's ID
+#       - name: Display Container ID
+#         run: echo "Running Container ID is ${{ env.CONTAINER_ID }}"
+
+#       # Step 7: Validate that the Image ID matches the Container ID
+#       - name: Validate Image ID and Container ID Match
+#         run: |
+#           IMAGE_ID="${{ env.IMAGE_ID }}"
+#           RUNNING_IMAGE_ID=$(docker inspect --format='{{.Image}}' ${{ env.CONTAINER_ID }})
+          
+#           echo "Expected Image ID: $IMAGE_ID"
+#           echo "Running Image ID: $RUNNING_IMAGE_ID"
+          
+#           if [[ "$RUNNING_IMAGE_ID" != "$IMAGE_ID" ]]; then
+#             echo "Error: Image ID and Container Image ID do not match."
+#             exit 1
+#           else
+#             echo "Image ID and Container Image ID match. Proceeding with the pipeline..."
+#           fi
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 name: Build, Validate Docker Image and Container
 
 on:
@@ -94,7 +165,7 @@ jobs:
     container:
       image: docker:latest  # Running in a containerized environment
     steps:
-      # Step 1: Check out the code
+      # Step 1: Checkout the code
       - name: Checkout code
         uses: actions/checkout@v3
 
@@ -102,28 +173,34 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
 
-      # Step 3: Build the Docker image and capture the SHA256 digest
+      # Step 3: Use Docker image name and tag from secrets
+      - name: Set Image Name and Tag from Secrets
+        run: |
+          echo "IMAGE_NAME=${{ secrets.DOCKER_IMAGE_NAME }}" >> $GITHUB_ENV
+          echo "IMAGE_TAG=${{ secrets.DOCKER_IMAGE_TAG }}" >> $GITHUB_ENV
+
+      # Step 4: Build the Docker image and capture the SHA256 digest
       - name: Build Docker Image
         run: |
-          docker build --no-cache -t myapp:latest .
-          IMAGE_ID=$(docker inspect --format='{{.ID}}' myapp:latest)  # Capture the Image ID (SHA256)
+          docker build --no-cache -t ${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }} .
+          IMAGE_ID=$(docker inspect --format='{{.ID}}' ${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }})  # Capture the Image ID (SHA256)
           echo "IMAGE_ID=${IMAGE_ID}" >> $GITHUB_ENV  # Store Image ID for use in next steps
 
-      # Step 4: Display the built image's SHA256 ID
+      # Step 5: Display the built image's SHA256 ID
       - name: Display Image ID
         run: echo "Built Image ID is ${{ env.IMAGE_ID }}"
 
-      # Step 5: Run a container from the image and capture the container's SHA256 ID
+      # Step 6: Run a container from the image and capture the container's SHA256 ID
       - name: Run Docker Container
         run: |
-          CONTAINER_ID=$(docker run -d myapp:latest)
+          CONTAINER_ID=$(docker run -d ${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }})
           echo "CONTAINER_ID=${CONTAINER_ID}" >> $GITHUB_ENV  # Store Container ID
 
-      # Step 6: Display the running container's ID
+      # Step 7: Display the running container's ID
       - name: Display Container ID
         run: echo "Running Container ID is ${{ env.CONTAINER_ID }}"
 
-      # Step 7: Validate that the Image ID matches the Container ID
+      # Step 8: Validate that the Image ID matches the Container ID
       - name: Validate Image ID and Container ID Match
         run: |
           IMAGE_ID="${{ env.IMAGE_ID }}"
