@@ -86,7 +86,7 @@ jobs:
   capture-and-validate-container-id:
     runs-on: ubuntu-latest
     container:
-      image: docker:latest  # Use the official Docker image
+      image: dheeman29/my-sample-image  # Use the official Docker image
     steps:
       # Step 1: Checkout code
       - name: Checkout code
