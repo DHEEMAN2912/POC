@@ -95,8 +95,8 @@ jobs:
       # Step 2: Install curl, jq, and openssl
       - name: Install Packages
         run: |
-          sudo apt-get update
-          sudo apt-get install -y curl jq openssl
+          apt-get update
+          apt-get install -y curl jq openssl
 
       # Step 3: Capture current container ID
       - name: Capture Container ID
