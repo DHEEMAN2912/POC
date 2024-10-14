@@ -101,11 +101,11 @@ jobs:
           echo "Captured Container SHA256 ID: $CONTAINER_SHA256"
           echo "CONTAINER_SHA256=$CONTAINER_SHA256" >> $GITHUB_ENV
 
-      # Set Output for future use (optional)
-      - name: Set Output for SHA256 ID
-        run: echo "Captured SHA256 ID: $CONTAINER_SHA256"
-        env:
-          CONTAINER_SHA256: ${{ env.CONTAINER_SHA256 }}
+      # # Set Output for future use (optional)
+      # - name: Set Output for SHA256 ID
+      #   run: echo "Captured SHA256 ID: $CONTAINER_SHA256"
+      #   env:
+      #     CONTAINER_SHA256: ${{ env.CONTAINER_SHA256 }}
 
       # Validation step: compare captured SHA256 ID with a predefined secret (optional if already set)
       - name: Validate Container SHA256 ID
