@@ -85,31 +85,40 @@
 
 
 
-name: container
+name: container-workflow
 on: push
 
 jobs:
-  node-docker:
+  capture-container:
     runs-on: ubuntu-latest
     container: node:14.15.0-alpine3.12
     steps:
-      # Step to capture the container ID
-      - name: Capture and Verify Container ID
+      # Step to capture the SHA256 container ID
+      - name: Capture Container SHA256 ID
+        id: capture-id
         run: |
-          CONTAINER_ID=$(cat /proc/self/cgroup | grep "docker" | sed 's/^.*\///' | tail -n1)
-          echo "Captured Container ID: $CONTAINER_ID"
-          
-          # Validation against the stored secret
-          if [[ "$CONTAINER_ID" == "${{ secrets.CONTAINER_ID }}" ]]; then
-            echo "Validated: Container ID matches!"
+          CONTAINER_SHA256=$(docker inspect --format='{{.Id}}' $(hostname))
+          echo "Captured Container SHA256 ID: $CONTAINER_SHA256"
+          echo "CONTAINER_SHA256=$CONTAINER_SHA256" >> $GITHUB_ENV
+
+      # Set Output for future use (optional)
+      - name: Set Output for SHA256 ID
+        run: echo "Captured SHA256 ID: $CONTAINER_SHA256"
+        env:
+          CONTAINER_SHA256: ${{ env.CONTAINER_SHA256 }}
+
+      # Validation step: compare captured SHA256 ID with a predefined secret (optional if already set)
+      - name: Validate Container SHA256 ID
+        run: |
+          if [[ "$CONTAINER_SHA256" == "${{ secrets.CONTAINER_SHA256 }}" ]]; then
+            echo "Validated: Container SHA256 ID matches!"
           else
-            echo "Validation failed: Container ID does not match!"
+            echo "Validation failed: Container SHA256 ID does not match!"
             exit 1
           fi
 
-      # Only if validation passes, this step will run
-      - name: Log the Node version and OS release
+      # Step to log Node version and OS release after validation passes
+      - name: Log Node Version and OS Release
         run: |
           node -v
           cat /etc/os-release
- 
