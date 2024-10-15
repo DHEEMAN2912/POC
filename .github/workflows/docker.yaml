@@ -66,8 +66,7 @@ jobs:
           fi          
           echo "Docker Container SHA256 ID matches. Proceeding..."      
           
-      # Step 5: Log Node version and OS release      
-      - name: Log the Node version and OS release        
-        run: |          
-          node -v          
-          cat /etc/os-release
+      # Step 5: Print Hello World
+      - name: Hello World
+        run: |
+          echo "Hello World, you did it!"
