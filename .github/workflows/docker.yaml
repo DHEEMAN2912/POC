@@ -7,7 +7,7 @@
 #   docker-agent:    
 #     runs-on: ubuntu-latest    
 #     container:      
-#       image: dheeman29/docker:latest
+#       image: dheeman29/docker:v1
 #     steps:      
 #       # # Step 1: Pull Docker Image
 #       # - name: Pull Docker Image        
@@ -17,7 +17,7 @@
 #       # Step 2: Capture SHA256 ID of the Image
 #       - name: Capture SHA256 ID of the Image
 #         run: |          
-#           CONTAINER_SHA256=$(docker inspect --format='{{index .RepoDigests 0}}' dheeman29/docker:latest | sed 's/.*@sha256://')
+#           CONTAINER_SHA256=$(docker inspect --format='{{index .RepoDigests 0}}' dheeman29/docker:v1 | sed 's/.*@sha256://')
 #           echo "CONTAINER_SHA256=$CONTAINER_SHA256" >> $GITHUB_ENV
 
 #       # Step 3: Verify Container SHA256 ID
@@ -47,19 +47,19 @@ jobs:
   docker-agent:    
     runs-on: ubuntu-latest    
     container:      
-      image: dheeman29/docker:latest
+      image: dheeman29/docker:v1
 
     steps:      
       # Step 1: Capture SHA256 ID of the Image
       - name: Capture SHA256 ID of the Image
         run: |
           # Capture the SHA256 from RepoDigests only if it's available
-          REPO_DIGESTS=$(docker inspect --format='{{.RepoDigests}}' dheeman29/docker:latest)
+          REPO_DIGESTS=$(docker inspect --format='{{.RepoDigests}}' dheeman29/docker:v1)
           if [ "$REPO_DIGESTS" == "[]" ]; then
               echo "Error: RepoDigests is empty. Cannot retrieve SHA256."
               exit 1
           fi
-          CONTAINER_SHA256=$(docker inspect --format='{{index .RepoDigests 0}}' dheeman29/docker:latest | sed 's/.*@sha256://')
+          CONTAINER_SHA256=$(docker inspect --format='{{index .RepoDigests 0}}' dheeman29/docker:v1 | sed 's/.*@sha256://')
           echo "CONTAINER_SHA256=$CONTAINER_SHA256" >> $GITHUB_ENV
 
       # Step 2: Verify Container SHA256 ID
@@ -86,7 +86,7 @@ jobs:
       # Step 4: Verify Image Signature (Keyless)
       - name: Verify Image Signature (Keyless)
         run: |
-          cosign verify dheeman29/docker:latest
+          cosign verify dheeman29/docker:v1
         env:
           COSIGN_EXPERIMENTAL: "true"
 
