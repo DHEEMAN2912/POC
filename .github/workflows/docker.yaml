@@ -20,13 +20,13 @@ jobs:
           echo "Docker version:"
           docker --version || echo "Docker not installed or not running."
 
-      # Step 2: Capture Docker Container SHA256 ID
-      - name: Capture Docker Container SHA256 ID
-        id: capture_sha256
+      # Step 2: Capture Docker Container ID
+      - name: Capture Docker Container ID
+        id: capture_id
         run: |
-          # Attempt to get the container ID using a different approach
-          CONTAINER_ID=$(basename $(cat /proc/self/cgroup | grep "docker" | awk -F/ '{print $3}' | head -n 1))
-          
+          # Attempt to get the container ID of the running container
+          CONTAINER_ID=$(grep -o -E '[0-9a-f]{64}' /proc/self/cgroup | head -n 1)
+
           if [ -z "$CONTAINER_ID" ]; then
             echo "Error: Unable to capture container ID."
             exit 1
@@ -34,9 +34,19 @@ jobs:
           
           echo "Captured Container ID: $CONTAINER_ID"
 
+          # Store the container ID as a GitHub environment variable
+          echo "CONTAINER_ID=$CONTAINER_ID" >> $GITHUB_ENV
+
+      # Step 3: Capture Docker Container SHA256 ID
+      - name: Capture Docker Container SHA256 ID
+        id: capture_sha256
+        run: |
+          # Get the container ID from the previous step
+          CONTAINER_ID="${{ env.CONTAINER_ID }}"
+
           # Get the SHA256 ID of the container (prefix with sha256: for full digest)
-          CONTAINER_SHA256=$(docker inspect --format='{{.Id}}' $CONTAINER_ID | sed 's/^sha256://')
-          
+          CONTAINER_SHA256=$(docker inspect --format='{{.Id}}' "$CONTAINER_ID" | sed 's/^sha256://')
+
           if [ -z "$CONTAINER_SHA256" ]; then
             echo "Error: Unable to capture container SHA256 ID."
             exit 1
@@ -47,11 +57,14 @@ jobs:
           # Store the SHA256 ID as a GitHub environment variable
           echo "CONTAINER_SHA256=$CONTAINER_SHA256" >> $GITHUB_ENV
 
-      # Step 3: Validate Docker Container SHA256 ID
+      # Step 4: Validate Docker Container SHA256 ID
       - name: Validate Docker Container SHA256 ID
         run: |
           # Get the expected container SHA256 from secrets
           EXPECTED_CONTAINER_SHA256="${{ secrets.CONTAINER_SHA256 }}"
+
+          # Get the captured SHA256 from the environment
+          CONTAINER_SHA256="${{ env.CONTAINER_SHA256 }}"
 
           # Validate if the captured SHA256 matches the expected SHA256
           if [[ "$CONTAINER_SHA256" != "$EXPECTED_CONTAINER_SHA256" ]]; then
@@ -61,7 +74,7 @@ jobs:
 
           echo "Docker Container SHA256 ID matches. Proceeding..."
 
-      # Step 4: Log Node version and OS release
+      # Step 5: Log Node version and OS release
       - name: Log the Node version and OS release
         run: |
           node -v
