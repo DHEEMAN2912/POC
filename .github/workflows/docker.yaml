@@ -37,8 +37,4 @@ jobs:
         run: |          
           echo "Hello World from container agent!"
 
-      # Step 5: Cleanup
-      - name: Cleanup        
-        run: |          
-          docker stop my-agent
-          docker rm my-agent
+  
