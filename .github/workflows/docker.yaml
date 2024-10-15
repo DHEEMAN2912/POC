@@ -1,3 +1,43 @@
+# name: Docker Container as Agent
+# on: 
+#   push: 
+#     branches: 
+#       - main
+# jobs:  
+#   docker-agent:    
+#     runs-on: ubuntu-latest    
+#     container:      
+#       image: dheeman29/docker:latest
+#     steps:      
+#       # # Step 1: Pull Docker Image
+#       # - name: Pull Docker Image        
+#       #   run: |          
+#       #     docker pull dheeman29/test:v1
+
+#       # Step 2: Capture SHA256 ID of the Image
+#       - name: Capture SHA256 ID of the Image
+#         run: |          
+#           CONTAINER_SHA256=$(docker inspect --format='{{index .RepoDigests 0}}' dheeman29/docker:latest | sed 's/.*@sha256://')
+#           echo "CONTAINER_SHA256=$CONTAINER_SHA256" >> $GITHUB_ENV
+
+#       # Step 3: Verify Container SHA256 ID
+#       - name: Verify Container SHA256 ID        
+#         run: |          
+#           EXPECTED_SHA256="${{ secrets.EXPECTED_SHA256 }}"
+#           ACTUAL_SHA256="${{ env.CONTAINER_SHA256 }}"
+          
+#           if [ "$EXPECTED_SHA256" != "$ACTUAL_SHA256" ]; then
+#               echo "SHA256 mismatch. Aborting."
+#               exit 1
+#           fi
+#           echo "SHA256 ID verified successfully."
+
+#       # Step 4: Print Hello World from the Container
+#       - name: Hello World        
+#         run: |          
+#           echo "Hello World from container agent!"
+
+
 name: Docker Container as Agent
 on: 
   push: 
@@ -8,21 +48,23 @@ jobs:
     runs-on: ubuntu-latest    
     container:      
       image: dheeman29/docker:latest
-    steps:      
-      # # Step 1: Pull Docker Image
-      # - name: Pull Docker Image        
-      #   run: |          
-      #     docker pull dheeman29/test:v1
 
-      # Step 2: Capture SHA256 ID of the Image
+    steps:      
+      # Step 1: Capture SHA256 ID of the Image
       - name: Capture SHA256 ID of the Image
-        run: |          
+        run: |
+          # Capture the SHA256 from RepoDigests only if it's available
+          REPO_DIGESTS=$(docker inspect --format='{{.RepoDigests}}' dheeman29/docker:latest)
+          if [ "$REPO_DIGESTS" == "[]" ]; then
+              echo "Error: RepoDigests is empty. Cannot retrieve SHA256."
+              exit 1
+          fi
           CONTAINER_SHA256=$(docker inspect --format='{{index .RepoDigests 0}}' dheeman29/docker:latest | sed 's/.*@sha256://')
           echo "CONTAINER_SHA256=$CONTAINER_SHA256" >> $GITHUB_ENV
 
-      # Step 3: Verify Container SHA256 ID
+      # Step 2: Verify Container SHA256 ID
       - name: Verify Container SHA256 ID        
-        run: |          
+        run: |
           EXPECTED_SHA256="${{ secrets.EXPECTED_SHA256 }}"
           ACTUAL_SHA256="${{ env.CONTAINER_SHA256 }}"
           
@@ -32,9 +74,14 @@ jobs:
           fi
           echo "SHA256 ID verified successfully."
 
-      # Step 4: Print Hello World from the Container
+      # Optional Step: Verify Image Signature using cosign (optional, requires prior setup)
+      # - name: Verify Image Signature with cosign
+      #   run: |
+      #     cosign verify dheeman29/docker:latest
+      #   env:
+      #     COSIGN_EXPERIMENTAL: "true"
+
+      # Step 3: Print Hello World from the Container
       - name: Hello World        
-        run: |          
+        run: |
           echo "Hello World from container agent!"
-
-
