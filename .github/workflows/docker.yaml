@@ -59,21 +59,6 @@
 #           cat /etc/os-release
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 name: Validate Docker Container SHA256 ID
 
 on:
@@ -92,8 +77,8 @@ jobs:
       - name: Capture Docker Container SHA256 ID
         run: |
           # Get the container ID of the running container
-          CONTAINER_ID=$(grep -o -E '[0-9a-f]{64}' /proc/self/cgroup | head -n 1)
-          
+          CONTAINER_ID=$(cat /proc/self/cgroup | grep -o '[0-9a-f]\{64\}' | head -n 1)
+
           if [ -z "$CONTAINER_ID" ]; then
             echo "Error: Unable to capture container ID."
             exit 1
@@ -102,8 +87,8 @@ jobs:
           fi
 
           # Get the SHA256 ID of the container
-          CONTAINER_SHA256=$(docker inspect --format='{{.Id}}' $CONTAINER_ID)
-          
+          CONTAINER_SHA256=$(docker inspect --format='{{.Id}}' "$CONTAINER_ID")
+
           if [ -z "$CONTAINER_SHA256" ]; then
             echo "Error: Unable to capture container SHA256 ID."
             exit 1
@@ -133,3 +118,18 @@ jobs:
         run: |
           node -v
           cat /etc/os-release
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
