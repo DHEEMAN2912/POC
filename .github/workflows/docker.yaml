@@ -14,6 +14,7 @@ jobs:
     steps:
       # Step 1: Capture Docker Container SHA256 ID
       - name: Capture Docker Container SHA256 ID
+        id: capture_sha256
         run: |
           # Get the container ID of the running container
           CONTAINER_ID=$(grep -o -E '[0-9a-f]{64}' /proc/self/cgroup | head -n 1)
@@ -21,19 +22,19 @@ jobs:
           if [ -z "$CONTAINER_ID" ]; then
             echo "Error: Unable to capture container ID."
             exit 1
-          else
-            echo "Captured Container ID: $CONTAINER_ID"
           fi
+          
+          echo "Captured Container ID: $CONTAINER_ID"
 
-          # Get the SHA256 ID of the container
-          CONTAINER_SHA256=$(docker inspect --format='{{.Id}}' $CONTAINER_ID)
+          # Get the SHA256 ID of the container (prefix with sha256: for full digest)
+          CONTAINER_SHA256=$(docker inspect --format='{{.Id}}' $CONTAINER_ID | sed 's/^sha256://')
           
           if [ -z "$CONTAINER_SHA256" ]; then
             echo "Error: Unable to capture container SHA256 ID."
             exit 1
-          else
-            echo "Captured Container SHA256 ID: $CONTAINER_SHA256"
           fi
+          
+          echo "Captured Container SHA256 ID: $CONTAINER_SHA256"
 
           # Store the SHA256 ID as a GitHub environment variable
           echo "CONTAINER_SHA256=$CONTAINER_SHA256" >> $GITHUB_ENV
@@ -48,13 +49,12 @@ jobs:
           if [[ "$CONTAINER_SHA256" != "$EXPECTED_CONTAINER_SHA256" ]]; then
             echo "Error: Docker Container SHA256 ID does not match. Aborting."
             exit 1
-          else
-            echo "Docker Container SHA256 ID matches. Proceeding..."
           fi
+
+          echo "Docker Container SHA256 ID matches. Proceeding..."
 
       # Step 3: Log Node version and OS release
       - name: Log the Node version and OS release
         run: |
           node -v
           cat /etc/os-release
-
