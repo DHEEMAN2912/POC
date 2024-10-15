@@ -1,3 +1,10 @@
+name: Validate Docker Container SHA256 ID
+
+on:
+  push:
+    branches:
+      - main
+
 jobs:
   validate-container:
     runs-on: ubuntu-latest
@@ -10,6 +17,7 @@ jobs:
         run: |
           # Get the container ID of the running container
           CONTAINER_ID=$(grep -o -E '[0-9a-f]{64}' /proc/self/cgroup | head -n 1)
+          
           if [ -z "$CONTAINER_ID" ]; then
             echo "Error: Unable to capture container ID."
             exit 1
@@ -19,6 +27,7 @@ jobs:
 
           # Get the SHA256 ID of the container
           CONTAINER_SHA256=$(docker inspect --format='{{.Id}}' $CONTAINER_ID)
+          
           if [ -z "$CONTAINER_SHA256" ]; then
             echo "Error: Unable to capture container SHA256 ID."
             exit 1
@@ -26,12 +35,16 @@ jobs:
             echo "Captured Container SHA256 ID: $CONTAINER_SHA256"
           fi
 
+          # Store the SHA256 ID as a GitHub environment variable
           echo "CONTAINER_SHA256=$CONTAINER_SHA256" >> $GITHUB_ENV
 
       # Step 2: Validate Docker Container SHA256 ID
       - name: Validate Docker Container SHA256 ID
         run: |
+          # Get the expected container SHA256 from secrets
           EXPECTED_CONTAINER_SHA256="${{ secrets.CONTAINER_SHA256 }}"
+
+          # Validate if the captured SHA256 matches the expected SHA256
           if [[ "$CONTAINER_SHA256" != "$EXPECTED_CONTAINER_SHA256" ]]; then
             echo "Error: Docker Container SHA256 ID does not match. Aborting."
             exit 1
