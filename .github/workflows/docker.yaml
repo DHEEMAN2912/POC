@@ -84,24 +84,24 @@ on:
 jobs:
   validate-container:
     runs-on: ubuntu-latest
-    
+
     steps:
-      # Step 1: Login to Docker Registry
+      # Step 1: Log in to Docker Registry
       - name: Log in to Docker Registry
         uses: docker/login-action@v2
         with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}  # Your Docker username
-          password: ${{ secrets.DOCKERHUB_PASSWORD }}  # Your Docker password
+          username: ${{ secrets.DOCKER_USERNAME }}  # Your Docker username
+          password: ${{ secrets.DOCKER_PASSWORD }}  # Your Docker password
 
-      # Step 2: Create a container and run jobs within it
+      # Step 2: Run the Docker container and capture its SHA256 ID
       - name: Run jobs in Docker container
         uses: docker://dheeman29/test:v1  # Replace with your image
         with:
           args: |
             sh -c "
-              # Step 2a: Capture Docker Container SHA256 ID
-              CONTAINER_ID=$(grep -o -E '[0-9a-f]{64}' /proc/self/cgroup | head -n 1)
-              
+              # Step 2a: Capture Docker Container ID
+              CONTAINER_ID=$(cat /proc/self/cgroup | grep -o -E '[0-9a-f]{64}' | head -n 1)
+
               if [ -z \"$CONTAINER_ID\" ]; then
                 echo 'Error: Unable to capture container ID.'
                 exit 1
@@ -111,7 +111,7 @@ jobs:
 
               # Step 2b: Get the SHA256 ID of the container
               CONTAINER_SHA256=$(docker inspect --format='{{.Id}}' $CONTAINER_ID)
-              
+
               if [ -z \"$CONTAINER_SHA256\" ]; then
                 echo 'Error: Unable to capture container SHA256 ID.'
                 exit 1
@@ -142,4 +142,3 @@ jobs:
         run: |
           node -v
           cat /etc/os-release
-
