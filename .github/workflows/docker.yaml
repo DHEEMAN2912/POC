@@ -15,10 +15,6 @@ jobs:
           docker pull dheeman29/test:v1
           docker run -d --name my-agent dheeman29/test:v1
           
-          # Capture the container ID
-          CONTAINER_ID=$(docker inspect --format='{{.Id}}' my-agent)
-          echo "CONTAINER_ID=$CONTAINER_ID" >> $GITHUB_ENV
-          
           # Capture the SHA256 ID of the image
           CONTAINER_SHA256=$(docker inspect --format='{{index .RepoDigests 0}}' dheeman29/test:v1 | sed 's/.*@sha256://')
           echo "CONTAINER_SHA256=$CONTAINER_SHA256" >> $GITHUB_ENV
