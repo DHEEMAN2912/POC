@@ -14,11 +14,11 @@ jobs:
       # Step 1: Capture Docker Container SHA256 ID
       - name: Capture Docker Container SHA256 ID
         run: |
-          # Get the container ID of the running container
-          CONTAINER_ID=$(cat /proc/self/cgroup | grep "docker" | sed 's/^.*\///' | tail -n1)
+          # Use the container's environment variable for its ID
+          CONTAINER_ID=$(head -n 1 /proc/self/cgroup | sed 's/^.*\///' | tail -n1)
           echo "Captured Container ID: $CONTAINER_ID"
-
-          # Get the SHA256 ID of the container
+          
+          # Get the container's SHA256 using the container ID (this will be its full digest if available)
           CONTAINER_SHA256=$(docker inspect --format='{{.Id}}' $CONTAINER_ID)
           echo "Captured Container SHA256 ID: $CONTAINER_SHA256"
           echo "CONTAINER_SHA256=$CONTAINER_SHA256" >> $GITHUB_ENV
