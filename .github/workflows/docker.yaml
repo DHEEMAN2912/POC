@@ -15,11 +15,11 @@ jobs:
           docker pull dheeman29/test:v1
           docker run -d --name my-agent dheeman29/test:v1
           
-          # Capture the SHA256 ID of the image
+          #Step 2: Capture the SHA256 ID of the image
           CONTAINER_SHA256=$(docker inspect --format='{{index .RepoDigests 0}}' dheeman29/test:v1 | sed 's/.*@sha256://')
           echo "CONTAINER_SHA256=$CONTAINER_SHA256" >> $GITHUB_ENV
       
-      # Step 2: Verify Container SHA256 ID
+      # Step 3: Verify Container SHA256 ID
       - name: Verify Container SHA256 ID        
         run: |          
           EXPECTED_SHA256="${{ secrets.EXPECTED_SHA256 }}"
@@ -31,12 +31,12 @@ jobs:
           fi
           echo "SHA256 ID verified successfully."
 
-      # Step 3: Print Hello World from the container
+      # Step 4: Print Hello World from the container
       - name: Hello World        
         run: |          
           echo "Hello World from container agent!"
 
-      # Step 4: Cleanup
+      # Step 5: Cleanup
       - name: Cleanup        
         run: |          
           docker stop my-agent
