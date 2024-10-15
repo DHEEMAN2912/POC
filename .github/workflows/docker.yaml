@@ -74,12 +74,12 @@ jobs:
           fi
           echo "SHA256 ID verified successfully."
 
-      # Optional Step: Verify Image Signature using cosign (optional, requires prior setup)
-      # - name: Verify Image Signature with cosign
-      #   run: |
-      #     cosign verify dheeman29/docker:latest
-      #   env:
-      #     COSIGN_EXPERIMENTAL: "true"
+     # Optional Step: Verify Image Signature using cosign (optional, requires prior setup)
+      - name: Verify Image Signature with cosign
+        run: |
+          cosign verify dheeman29/docker:latest
+        env:
+          COSIGN_EXPERIMENTAL: "true"
 
       # Step 3: Print Hello World from the Container
       - name: Hello World        
