@@ -21,12 +21,17 @@ jobs:
       - name: Capture Docker Container ID        
         id: capture_id        
         run: |          
+          # Check if Docker is running          
+          if ! docker ps > /dev/null 2>&1; then            
+            echo "Docker is not running. Exiting."            
+            exit 1          
+          fi          
           # Attempt to get the container ID of the running container          
-          CONTAINER_ID=$(grep -o -E '[0-9a-f]{64}' /proc/self/cgroup | head -n 1)          
+          CONTAINER_ID=$(docker inspect --format='{{.Id}}' $(hostname))          
           if [ -z "$CONTAINER_ID" ]; then            
             echo "Error: Unable to capture container ID."            
             exit 1          
-          fi          
+          fi                    
           echo "Captured Container ID: $CONTAINER_ID"          
           # Store the container ID as a GitHub environment variable          
           echo "CONTAINER_ID=$CONTAINER_ID" >> $GITHUB_ENV      
@@ -42,7 +47,7 @@ jobs:
           if [ -z "$CONTAINER_SHA256" ]; then            
             echo "Error: Unable to capture container SHA256 ID."            
             exit 1          
-          fi          
+          fi                    
           echo "Captured Container SHA256 ID: $CONTAINER_SHA256"          
           # Store the SHA256 ID as a GitHub environment variable          
           echo "CONTAINER_SHA256=$CONTAINER_SHA256" >> $GITHUB_ENV      
