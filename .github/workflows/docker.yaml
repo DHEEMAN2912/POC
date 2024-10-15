@@ -1,72 +1,47 @@
-name: Validate Docker Container SHA256 ID
+name: Docker Container as Agent
 on: 
   push: 
     branches: 
       - main
 jobs:  
-  validate-container:    
+  docker-agent:    
     runs-on: ubuntu-latest    
     container:      
-      image: dheeman29/test:v1    
+      image: dheeman29/test:v1 # Your Docker image here
     steps:      
-      # Step 1: Debug information about the environment      
-      - name: Check environment        
+      # Step 1: Start container and capture its ID and SHA256      
+      - name: Start container and capture IDs        
         run: |          
-          echo "Running in container:"          
-          cat /proc/self/cgroup          
-          echo "Docker version:"          
-          docker --version || echo "Docker not installed or not running."      
+          # Start the container in detached mode
+          docker run -d --name my-agent dheeman29/test:v1
+          
+          # Capture the container ID
+          CONTAINER_ID=$(docker inspect --format='{{.Id}}' my-agent)
+          echo "CONTAINER_ID=$CONTAINER_ID" >> $GITHUB_ENV
 
-      # Step 2: Capture Docker Container ID      
-      - name: Capture Docker Container ID        
-        id: capture_id        
+          # Capture the SHA256 ID of the image
+          CONTAINER_SHA256=$(docker inspect --format='{{.Image}}' my-agent | sed 's/^sha256://')
+          echo "CONTAINER_SHA256=$CONTAINER_SHA256" >> $GITHUB_ENV
+
+      # Step 2: Verify the container's SHA256 ID      
+      - name: Verify Container SHA256 ID        
         run: |          
-          # Check if Docker is running          
-          if ! docker ps > /dev/null 2>&1; then            
-            echo "Docker is not running. Exiting."            
-            exit 1          
-          fi          
-          # Attempt to get the container ID of the running container          
-          CONTAINER_ID=$(docker inspect --format='{{.Id}}' $(hostname))          
-          if [ -z "$CONTAINER_ID" ]; then            
-            echo "Error: Unable to capture container ID."            
-            exit 1          
-          fi                    
-          echo "Captured Container ID: $CONTAINER_ID"          
-          # Store the container ID as a GitHub environment variable          
-          echo "CONTAINER_ID=$CONTAINER_ID" >> $GITHUB_ENV      
+          EXPECTED_SHA256="${{ secrets.CONTAINER_SHA256 }}"
+          ACTUAL_SHA256="${{ env.CONTAINER_SHA256 }}"
           
-      # Step 3: Capture Docker Container SHA256 ID      
-      - name: Capture Docker Container SHA256 ID        
-        id: capture_sha256        
+          if [ "$EXPECTED_SHA256" != "$ACTUAL_SHA256" ]; then
+              echo "SHA256 mismatch. Aborting."
+              exit 1
+          fi
+          echo "SHA256 ID verified successfully."
+
+      # Step 3: Print Hello World from the container      
+      - name: Hello World        
         run: |          
-          # Get the container ID from the previous step          
-          CONTAINER_ID="${{ env.CONTAINER_ID }}"          
-          # Get the SHA256 ID of the container (prefix with sha256: for full digest)          
-          CONTAINER_SHA256=$(docker inspect --format='{{.Id}}' "$CONTAINER_ID" | sed 's/^sha256://')          
-          if [ -z "$CONTAINER_SHA256" ]; then            
-            echo "Error: Unable to capture container SHA256 ID."            
-            exit 1          
-          fi                    
-          echo "Captured Container SHA256 ID: $CONTAINER_SHA256"          
-          # Store the SHA256 ID as a GitHub environment variable          
-          echo "CONTAINER_SHA256=$CONTAINER_SHA256" >> $GITHUB_ENV      
-          
-      # Step 4: Validate Docker Container SHA256 ID      
-      - name: Validate Docker Container SHA256 ID        
+          echo "Hello World from container agent!"
+
+      # Step 4: Cleanup      
+      - name: Cleanup        
         run: |          
-          # Get the expected container SHA256 from secrets          
-          EXPECTED_CONTAINER_SHA256="${{ secrets.CONTAINER_SHA256 }}"          
-          # Get the captured SHA256 from the environment          
-          CONTAINER_SHA256="${{ env.CONTAINER_SHA256 }}"          
-          # Validate if the captured SHA256 matches the expected SHA256          
-          if [[ "$CONTAINER_SHA256" != "$EXPECTED_CONTAINER_SHA256" ]]; then            
-            echo "Error: Docker Container SHA256 ID does not match. Aborting."            
-            exit 1          
-          fi          
-          echo "Docker Container SHA256 ID matches. Proceeding..."      
-          
-      # Step 5: Print Hello World
-      - name: Hello World
-        run: |
-          echo "Hello World, you did it!"
+          docker stop my-agent
+          docker rm my-agent
