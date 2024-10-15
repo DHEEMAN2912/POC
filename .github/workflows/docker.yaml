@@ -8,7 +8,7 @@ on:
 jobs:
   validate-container:
     runs-on: ubuntu-latest
-    container: dheeman29/go-web-app:10234524538
+    container: dheeman29/test:latest
 
     steps:
       # Step 1: Capture Docker Container SHA256 ID
