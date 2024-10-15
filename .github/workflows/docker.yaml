@@ -41,7 +41,6 @@
 
 
 
-
 name: Docker Container as Agent
 on: 
   push: 
@@ -53,13 +52,18 @@ jobs:
     container:      
       image: dheeman29/docker:latest
     steps:      
-      # Step 1: Capture Container ID
+      # Step 1: Start and name the container
+      - name: Start Container
+        run: |          
+          docker run -d --name prod dheeman29/docker:latest
+          
+      # Step 2: Capture Container ID
       - name: Capture Container ID
         run: |          
           CONTAINER_ID=$(docker inspect --format='{{.Id}}' prod)
           echo "CONTAINER_ID=$CONTAINER_ID" >> $GITHUB_ENV
 
-      # Step 2: Verify Container ID
+      # Step 3: Verify Container ID
       - name: Verify Container ID        
         run: |          
           EXPECTED_CONTAINER_ID="${{ secrets.EXPECTED_CONTAINER_ID }}"
@@ -71,10 +75,13 @@ jobs:
           fi
           echo "Container ID verified successfully."
 
-      # Step 3: Print Hello World from the Container
+      # Step 4: Print Hello World from the Container
       - name: Hello World        
         run: |          
           echo "Hello World from container agent!"
 
-
-  
+      # Step 5: Cleanup
+      - name: Cleanup        
+        run: |          
+          docker stop prod
+          docker rm prod
