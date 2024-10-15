@@ -9,7 +9,7 @@ jobs:
   validate-container:
     runs-on: ubuntu-latest
     container:
-      image: your-docker-repo/your-image-name:latest
+      image: dheeman29/test:v1
 
     steps:
       # Step 1: Capture Docker Container SHA256 ID
