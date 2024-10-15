@@ -1,46 +1,3 @@
-# name: Docker Container as Agent
-# on: 
-#   push: 
-#     branches: 
-#       - main
-# jobs:  
-#   docker-agent:    
-#     runs-on: ubuntu-latest    
-#     container:      
-#       image: dheeman29/docker:latest
-#     steps:      
-#       # # Step 1: Pull Docker Image
-#       # - name: Pull Docker Image        
-#       #   run: |          
-#       #     docker pull dheeman29/test:v1
-
-#       # Step 2: Capture SHA256 ID of the Image
-#       - name: Capture SHA256 ID of the Image
-#         run: |          
-#           CONTAINER_SHA256=$(docker inspect --format='{{index .RepoDigests 0}}' dheeman29/docker:latest | sed 's/.*@sha256://')
-#           echo "CONTAINER_SHA256=$CONTAINER_SHA256" >> $GITHUB_ENV
-
-#       # Step 3: Verify Container SHA256 ID
-#       - name: Verify Container SHA256 ID        
-#         run: |          
-#           EXPECTED_SHA256="${{ secrets.EXPECTED_SHA256 }}"
-#           ACTUAL_SHA256="${{ env.CONTAINER_SHA256 }}"
-          
-#           if [ "$EXPECTED_SHA256" != "$ACTUAL_SHA256" ]; then
-#               echo "SHA256 mismatch. Aborting."
-#               exit 1
-#           fi
-#           echo "SHA256 ID verified successfully."
-
-#       # Step 4: Print Hello World from the Container
-#       - name: Hello World        
-#         run: |          
-#           echo "Hello World from container agent!"
-
-
-
-
-
 name: Docker Container as Agent
 on: 
   push: 
@@ -52,36 +9,32 @@ jobs:
     container:      
       image: dheeman29/docker:latest
     steps:      
-      # Step 1: Start and name the container
-      - name: Start Container
-        run: |          
-          docker run -d --name prod dheeman29/docker:latest
-          
-      # Step 2: Capture Container ID
-      - name: Capture Container ID
-        run: |          
-          CONTAINER_ID=$(docker inspect --format='{{.Id}}' prod)
-          echo "CONTAINER_ID=$CONTAINER_ID" >> $GITHUB_ENV
+      # # Step 1: Pull Docker Image
+      # - name: Pull Docker Image        
+      #   run: |          
+      #     docker pull dheeman29/test:v1
 
-      # Step 3: Verify Container ID
-      - name: Verify Container ID        
+      # Step 2: Capture SHA256 ID of the Image
+      - name: Capture SHA256 ID of the Image
         run: |          
-          EXPECTED_CONTAINER_ID="${{ secrets.EXPECTED_CONTAINER_ID }}"
-          ACTUAL_CONTAINER_ID="${{ env.CONTAINER_ID }}"
+          CONTAINER_SHA256=$(docker inspect --format='{{index .RepoDigests 0}}' dheeman29/docker:latest | sed 's/.*@sha256://')
+          echo "CONTAINER_SHA256=$CONTAINER_SHA256" >> $GITHUB_ENV
+
+      # Step 3: Verify Container SHA256 ID
+      - name: Verify Container SHA256 ID        
+        run: |          
+          EXPECTED_SHA256="${{ secrets.EXPECTED_SHA256 }}"
+          ACTUAL_SHA256="${{ env.CONTAINER_SHA256 }}"
           
-          if [ "$EXPECTED_CONTAINER_ID" != "$ACTUAL_CONTAINER_ID" ]; then
-              echo "Container ID mismatch. Aborting."
+          if [ "$EXPECTED_SHA256" != "$ACTUAL_SHA256" ]; then
+              echo "SHA256 mismatch. Aborting."
               exit 1
           fi
-          echo "Container ID verified successfully."
+          echo "SHA256 ID verified successfully."
 
       # Step 4: Print Hello World from the Container
       - name: Hello World        
         run: |          
           echo "Hello World from container agent!"
 
-      # Step 5: Cleanup
-      - name: Cleanup        
-        run: |          
-          docker stop prod
-          docker rm prod
+
