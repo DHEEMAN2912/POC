@@ -8,7 +8,7 @@ on:
 jobs:
   validate-container:
     runs-on: ubuntu-latest
-    container: dheeman29/test:latest
+    container: dheeman29/test:v1
 
     steps:
       # Step 1: Capture Docker Container SHA256 ID
