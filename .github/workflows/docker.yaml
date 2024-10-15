@@ -7,7 +7,7 @@ jobs:
   docker-agent:    
     runs-on: ubuntu-latest    
     container:      
-      image: dheeman29/test:v1
+      image: dheeman29/crashlooptest:v1
     steps:      
       # # Step 1: Pull Docker Image
       # - name: Pull Docker Image        
