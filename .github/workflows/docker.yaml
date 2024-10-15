@@ -9,10 +9,10 @@ jobs:
     container:      
       image: dheeman29/test:v1
     steps:      
-      # Step 1: Pull Docker Image
-      - name: Pull Docker Image        
-        run: |          
-          docker pull dheeman29/test:v1
+      # # Step 1: Pull Docker Image
+      # - name: Pull Docker Image        
+      #   run: |          
+      #     docker pull dheeman29/test:v1
 
       # Step 2: Capture SHA256 ID of the Image
       - name: Capture SHA256 ID of the Image
