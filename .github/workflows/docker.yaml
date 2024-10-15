@@ -17,7 +17,7 @@ jobs:
       # Step 2: Capture SHA256 ID of the Image
       - name: Capture SHA256 ID of the Image
         run: |          
-          CONTAINER_SHA256=$(docker inspect --format='{{index .RepoDigests 0}}' dheeman29/test:v1 | sed 's/.*@sha256://')
+          CONTAINER_SHA256=$(docker inspect --format='{{index .RepoDigests 0}}' dheeman29/docker:latest | sed 's/.*@sha256://')
           echo "CONTAINER_SHA256=$CONTAINER_SHA256" >> $GITHUB_ENV
 
       # Step 3: Verify Container SHA256 ID
