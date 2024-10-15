@@ -1,26 +1,31 @@
-name: Validate Docker Container SHA256 ID
-
-on:
-  push:
-    branches:
-      - main
-
 jobs:
   validate-container:
     runs-on: ubuntu-latest
-    container: dheeman29/test:v1
+    container:
+      image: your-docker-repo/your-image-name:latest
 
     steps:
       # Step 1: Capture Docker Container SHA256 ID
       - name: Capture Docker Container SHA256 ID
         run: |
-          # Use the container's environment variable for its ID
-          CONTAINER_ID=$(head -n 1 /proc/self/cgroup | sed 's/^.*\///' | tail -n1)
-          echo "Captured Container ID: $CONTAINER_ID"
-          
-          # Get the container's SHA256 using the container ID (this will be its full digest if available)
+          # Get the container ID of the running container
+          CONTAINER_ID=$(grep -o -E '[0-9a-f]{64}' /proc/self/cgroup | head -n 1)
+          if [ -z "$CONTAINER_ID" ]; then
+            echo "Error: Unable to capture container ID."
+            exit 1
+          else
+            echo "Captured Container ID: $CONTAINER_ID"
+          fi
+
+          # Get the SHA256 ID of the container
           CONTAINER_SHA256=$(docker inspect --format='{{.Id}}' $CONTAINER_ID)
-          echo "Captured Container SHA256 ID: $CONTAINER_SHA256"
+          if [ -z "$CONTAINER_SHA256" ]; then
+            echo "Error: Unable to capture container SHA256 ID."
+            exit 1
+          else
+            echo "Captured Container SHA256 ID: $CONTAINER_SHA256"
+          fi
+
           echo "CONTAINER_SHA256=$CONTAINER_SHA256" >> $GITHUB_ENV
 
       # Step 2: Validate Docker Container SHA256 ID
