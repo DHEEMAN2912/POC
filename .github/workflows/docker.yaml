@@ -12,12 +12,20 @@ jobs:
       image: dheeman29/test:v1
 
     steps:
-      # Step 1: Capture Docker Container SHA256 ID
+      # Step 1: Debug information about the environment
+      - name: Check environment
+        run: |
+          echo "Running in container:"
+          cat /proc/self/cgroup
+          echo "Docker version:"
+          docker --version || echo "Docker not installed or not running."
+
+      # Step 2: Capture Docker Container SHA256 ID
       - name: Capture Docker Container SHA256 ID
         id: capture_sha256
         run: |
-          # Get the container ID of the running container
-          CONTAINER_ID=$(grep -o -E '[0-9a-f]{64}' /proc/self/cgroup | head -n 1)
+          # Attempt to get the container ID using a different approach
+          CONTAINER_ID=$(basename $(cat /proc/self/cgroup | grep "docker" | awk -F/ '{print $3}' | head -n 1))
           
           if [ -z "$CONTAINER_ID" ]; then
             echo "Error: Unable to capture container ID."
@@ -39,7 +47,7 @@ jobs:
           # Store the SHA256 ID as a GitHub environment variable
           echo "CONTAINER_SHA256=$CONTAINER_SHA256" >> $GITHUB_ENV
 
-      # Step 2: Validate Docker Container SHA256 ID
+      # Step 3: Validate Docker Container SHA256 ID
       - name: Validate Docker Container SHA256 ID
         run: |
           # Get the expected container SHA256 from secrets
@@ -53,7 +61,7 @@ jobs:
 
           echo "Docker Container SHA256 ID matches. Proceeding..."
 
-      # Step 3: Log Node version and OS release
+      # Step 4: Log Node version and OS release
       - name: Log the Node version and OS release
         run: |
           node -v
