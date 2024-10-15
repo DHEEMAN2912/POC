@@ -56,7 +56,7 @@ jobs:
       # Step 1: Capture Container ID
       - name: Capture Container ID
         run: |          
-          CONTAINER_ID=$(docker inspect --format='{{.Id}}' my-container)
+          CONTAINER_ID=$(docker inspect --format='{{.Id}}' prod)
           echo "CONTAINER_ID=$CONTAINER_ID" >> $GITHUB_ENV
 
       # Step 2: Verify Container ID
