@@ -38,59 +38,59 @@
 #           echo "Hello World from container agent!"
 
 
-name: Docker Container as Agent
-on: 
-  push: 
-    branches: 
-      - main
-jobs:  
-  docker-agent:    
-    runs-on: ubuntu-latest    
-    container:      
-      image: dheeman29/docker:v1
+# name: Docker Container as Agent
+# on: 
+#   push: 
+#     branches: 
+#       - main
+# jobs:  
+#   docker-agent:    
+#     runs-on: ubuntu-latest    
+#     container:      
+#       image: dheeman29/docker:v1
 
-    steps:      
-      # Step 1: Capture SHA256 ID of the Image
-      - name: Capture SHA256 ID of the Image
-        run: |
-          # Capture the SHA256 from RepoDigests only if it's available
-          REPO_DIGESTS=$(docker inspect --format='{{.RepoDigests}}' dheeman29/docker:v1)
-          if [ "$REPO_DIGESTS" == "[]" ]; then
-              echo "Error: RepoDigests is empty. Cannot retrieve SHA256."
-              exit 1
-          fi
-          CONTAINER_SHA256=$(docker inspect --format='{{index .RepoDigests 0}}' dheeman29/docker:v1 | sed 's/.*@sha256://')
-          echo "CONTAINER_SHA256=$CONTAINER_SHA256" >> $GITHUB_ENV
+#     steps:      
+#       # Step 1: Capture SHA256 ID of the Image
+#       - name: Capture SHA256 ID of the Image
+#         run: |
+#           # Capture the SHA256 from RepoDigests only if it's available
+#           REPO_DIGESTS=$(docker inspect --format='{{.RepoDigests}}' dheeman29/docker:v1)
+#           if [ "$REPO_DIGESTS" == "[]" ]; then
+#               echo "Error: RepoDigests is empty. Cannot retrieve SHA256."
+#               exit 1
+#           fi
+#           CONTAINER_SHA256=$(docker inspect --format='{{index .RepoDigests 0}}' dheeman29/docker:v1 | sed 's/.*@sha256://')
+#           echo "CONTAINER_SHA256=$CONTAINER_SHA256" >> $GITHUB_ENV
 
-      # Step 2: Verify Container SHA256 ID
-      - name: Verify Container SHA256 ID        
-        run: |
-          EXPECTED_SHA256="${{ secrets.EXPECTED_SHA256 }}"
-          ACTUAL_SHA256="${{ env.CONTAINER_SHA256 }}"
+#       # Step 2: Verify Container SHA256 ID
+#       - name: Verify Container SHA256 ID        
+#         run: |
+#           EXPECTED_SHA256="${{ secrets.EXPECTED_SHA256 }}"
+#           ACTUAL_SHA256="${{ env.CONTAINER_SHA256 }}"
           
-          if [ "$EXPECTED_SHA256" != "$ACTUAL_SHA256" ]; then
-              echo "SHA256 mismatch. Aborting."
-              exit 1
-          fi
-          echo "SHA256 ID verified successfully."
+#           if [ "$EXPECTED_SHA256" != "$ACTUAL_SHA256" ]; then
+#               echo "SHA256 mismatch. Aborting."
+#               exit 1
+#           fi
+#           echo "SHA256 ID verified successfully."
 
-      # Step 3: Install curl and cosign
-      - name: Install curl and cosign
-        run: |
-          apt-get update
-          apt-get install -y curl
-          curl -sSL https://github.com/sigstore/cosign/releases/download/v2.1.0/cosign-linux-amd64 -o cosign
-          chmod +x cosign
-          sudo mv cosign /usr/local/bin/
+#       # Step 3: Install curl and cosign
+#       - name: Install curl and cosign
+#         run: |
+#           apt-get update
+#           apt-get install -y curl
+#           curl -sSL https://github.com/sigstore/cosign/releases/download/v2.1.0/cosign-linux-amd64 -o cosign
+#           chmod +x cosign
+#           sudo mv cosign /usr/local/bin/
 
-      # Step 4: Verify Image Signature (Keyless)
-      - name: Verify Image Signature (Keyless)
-        run: |
-          cosign verify dheeman29/docker:v1
-        env:
-          COSIGN_EXPERIMENTAL: "true"
+#       # Step 4: Verify Image Signature (Keyless)
+#       - name: Verify Image Signature (Keyless)
+#         run: |
+#           cosign verify dheeman29/docker:v1
+#         env:
+#           COSIGN_EXPERIMENTAL: "true"
 
-      # Step 5: Print Hello World from the Container
-      - name: Hello World        
-        run: |
-          echo "Hello World from container agent!"
+#       # Step 5: Print Hello World from the Container
+#       - name: Hello World        
+#         run: |
+#           echo "Hello World from container agent!"
