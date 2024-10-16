@@ -1,0 +1,72 @@
+name: Docker Container as Agent
+on: 
+  push: 
+    branches: 
+      - main
+jobs:  
+  docker-agent:    
+    runs-on: ubuntu-latest    
+    container:      
+      image: dheeman29/docker:v1
+
+    steps:      
+      # Step 1: Capture SHA256 ID of the Image
+      - name: Capture SHA256 ID of the Image
+        run: |
+          # Capture the SHA256 from RepoDigests only if it's available
+          REPO_DIGESTS=$(docker inspect --format='{{.RepoDigests}}' dheeman29/docker:v1)
+          if [ "$REPO_DIGESTS" == "[]" ]; then
+              echo "Error: RepoDigests is empty. Cannot retrieve SHA256."
+              exit 1
+          fi
+          CONTAINER_SHA256=$(docker inspect --format='{{index .RepoDigests 0}}' dheeman29/docker:v1 | sed 's/.*@sha256://')
+          echo "CONTAINER_SHA256=$CONTAINER_SHA256" >> $GITHUB_ENV
+
+      # Step 2: Verify Container SHA256 ID        
+      - name: Verify Container SHA256 ID        
+        run: |
+          EXPECTED_SHA256="${{ secrets.EXPECTED_SHA256 }}"
+          ACTUAL_SHA256="${{ env.CONTAINER_SHA256 }}"
+          
+          if [ "$EXPECTED_SHA256" != "$ACTUAL_SHA256" ]; then
+              echo "SHA256 mismatch. Aborting."
+              exit 1
+          fi
+          echo "SHA256 ID verified successfully."
+
+      # Step 3: Install curl and cosign
+      - name: Install Cosign CLI
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y curl
+          curl -sSL -o /usr/local/bin/cosign https://github.com/sigstore/cosign/releases/download/v2.2.3/cosign-linux-amd64
+          chmod +x /usr/local/bin/cosign
+          cosign version
+
+      # Step 4: Sign the Container Image
+      - name: Sign Container Image
+        run: |
+          cosign sign --key env://COSIGN_KEY dheeman29/docker:v1 --yes
+        env:
+          COSIGN_KEY: ${{ secrets.COSIGN_KEY }}
+          COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSPHRASE }}
+
+      # Step 5: Public Key Creation
+      - name: Public Key Creation
+        run: |
+          cosign public-key --key env://COSIGN_KEY > cosign.pub
+        env:
+          COSIGN_KEY: ${{ secrets.COSIGN_KEY }}
+          COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSPHRASE }}
+
+      # Step 6: Verify Image Signature (Keyless)
+      - name: Verify Image Signature (Keyless)
+        run: |
+          cosign verify dheeman29/docker:v1
+        env:
+          COSIGN_EXPERIMENTAL: "true"
+
+      # Step 7: Print Hello World from the Container
+      - name: Hello World        
+        run: |
+          echo "Hello World from container agent!"
