@@ -1,4 +1,4 @@
-name: Docker Container as Agentt
+name: Docker Container as Agent
 on: 
   push: 
     branches: 
@@ -13,7 +13,6 @@ jobs:
       # Step 1: Capture SHA256 ID of the Image
       - name: Capture SHA256 ID of the Image
         run: |
-          # Capture the SHA256 from RepoDigests only if it's available
           REPO_DIGESTS=$(docker inspect --format='{{.RepoDigests}}' dheeman29/docker-cosign:v1)
           if [ "$REPO_DIGESTS" == "[]" ]; then
               echo "Error: RepoDigests is empty. Cannot retrieve SHA256."
@@ -34,15 +33,20 @@ jobs:
           fi
           echo "SHA256 ID verified successfully."
 
-      # Step 3: Sign the Container Image
+      # Step 3: Docker Login (Add this step for authentication)
+      - name: Login to Docker Hub
+        run: |
+          echo "${{ secrets.DOCKERHUB_USERNAME }}" | docker login --username "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
+
+      # Step 4: Sign the Container Image (using digest instead of tag)
       - name: Sign Container Image
         run: |
-          cosign sign --key env://COSIGN_KEY dheeman29/docker-cosign:v1 --yes
+          cosign sign --key env://COSIGN_KEY dheeman29/docker-cosign@sha256:${{ env.CONTAINER_SHA256 }} --yes
         env:
           COSIGN_KEY: ${{ secrets.COSIGN_KEY }}
           COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSPHRASE }}
 
-      # Step 4: Public Key Creation
+      # Step 5: Public Key Creation
       - name: Public Key Creation
         run: |
           cosign public-key --key env://COSIGN_KEY > cosign.pub
@@ -50,14 +54,14 @@ jobs:
           COSIGN_KEY: ${{ secrets.COSIGN_KEY }}
           COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSPHRASE }}
 
-      # Step 5: Verify Image Signature (Keyless)
+      # Step 6: Verify Image Signature (Keyless)
       - name: Verify Image Signature (Keyless)
         run: |
-          cosign verify dheeman29/docker-cosign:v1
+          cosign verify dheeman29/docker-cosign@sha256:${{ env.CONTAINER_SHA256 }}
         env:
           COSIGN_EXPERIMENTAL: "true"
 
-      # Step 6: Print Hello World from the Container
+      # Step 7: Print Hello World from the Container
       - name: Hello World        
         run: |
           echo "Hello World from container agent!"
