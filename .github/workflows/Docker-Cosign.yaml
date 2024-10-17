@@ -19,7 +19,7 @@ jobs:
               echo "Error: RepoDigests is empty. Cannot retrieve SHA256."
               exit 1
           fi
-          CONTAINER_SHA256=$(docker inspect --format='{{index .RepoDigests 0}}' dheeman29/docker:v1 | sed 's/.*@sha256://')
+          CONTAINER_SHA256=$(docker inspect --format='{{index .RepoDigests 0}}' dheeman29/docker-cosign:v1 | sed 's/.*@sha256://')
           echo "CONTAINER_SHA256=$CONTAINER_SHA256" >> $GITHUB_ENV
 
       # Step 2: Verify Container SHA256 ID        
@@ -45,7 +45,7 @@ jobs:
       # Step 4: Sign the Container Image
       - name: Sign Container Image
         run: |
-          cosign sign --key env://COSIGN_KEY dheeman29/docker:v1 --yes
+          cosign sign --key env://COSIGN_KEY dheeman29/docker-cosign:v1 --yes
         env:
           COSIGN_KEY: ${{ secrets.COSIGN_KEY }}
           COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSPHRASE }}
@@ -61,7 +61,7 @@ jobs:
       # Step 6: Verify Image Signature (Keyless)
       - name: Verify Image Signature (Keyless)
         run: |
-          cosign verify dheeman29/docker:v1
+          cosign verify dheeman29/docker-cosign:v1
         env:
           COSIGN_EXPERIMENTAL: "true"
 
