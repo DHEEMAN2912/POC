@@ -58,12 +58,12 @@ jobs:
         run: |
           cosign public-key --key env://COSIGN_KEY > cosign.pub
 
-      # Step 6: Verify Image Signature (Keyless)
-      - name: Verify Image Signature (Keyless)
+      # Step 6: Verify Image Signature (Key-based)
+      - name: Verify Image Signature (Key-based)
+        run: |
+          cosign verify --key cosign.pub dheeman29/docker-cosign@sha256:${{ env.CONTAINER_SHA256 }}
         env:
           COSIGN_EXPERIMENTAL: "true"
-        run: |
-          cosign verify dheeman29/docker-cosign@sha256:${{ env.CONTAINER_SHA256 }}
 
       # Step 7: Print Hello World from the Container
       - name: Hello World        
