@@ -42,10 +42,10 @@ jobs:
       # Step 4: Install Trivy
       - name: Install Trivy
         run: |
-          sudo apt-get update -y
-          sudo apt-get install wget -y
-          wget https://github.com/aquasecurity/trivy/releases/latest/download/trivy_0.44.0_Linux-64bit.deb
-          sudo dpkg -i trivy_0.44.0_Linux-64bit.deb
+           apt-get update -y
+           apt-get install wget -y
+           wget https://github.com/aquasecurity/trivy/releases/latest/download/trivy_0.44.0_Linux-64bit.deb
+           dpkg -i trivy_0.44.0_Linux-64bit.deb
 
       # Step 5: Sign the Container Image (using digest instead of tag)
       - name: Sign Container Image
