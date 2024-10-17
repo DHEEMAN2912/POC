@@ -8,10 +8,11 @@ jobs:
     runs-on: ubuntu-latest    
     container:      
       image: dheeman29/docker-cosign:v1
+
     steps:      
       # Step 1: Capture SHA256 ID of the Image
       - name: Capture SHA256 ID of the Image
-        run: |          
+        run: |
           REPO_DIGESTS=$(docker inspect --format='{{.RepoDigests}}' dheeman29/docker-cosign:v1)
           if [ "$REPO_DIGESTS" == "[]" ]; then
               echo "Error: RepoDigests is empty. Cannot retrieve SHA256."
@@ -20,9 +21,9 @@ jobs:
           CONTAINER_SHA256=$(docker inspect --format='{{index .RepoDigests 0}}' dheeman29/docker-cosign:v1 | sed 's/.*@sha256://')
           echo "CONTAINER_SHA256=$CONTAINER_SHA256" >> $GITHUB_ENV
 
-      # Step 2: Verify Container SHA256 ID
+      # Step 2: Verify Container SHA256 ID        
       - name: Verify Container SHA256 ID        
-        run: |          
+        run: |
           EXPECTED_SHA256="${{ secrets.EXPECTED_SHA256 }}"
           ACTUAL_SHA256="${{ env.CONTAINER_SHA256 }}"
           
@@ -32,19 +33,20 @@ jobs:
           fi
           echo "SHA256 ID verified successfully."
 
-      # Step 3: Log in to Docker Hub using Config
+      # Step 3: Log in to Docker Hub
       - name: Log in to Docker Hub
-        env:
-          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
-          DOCKERHUB_PASSWORD: ${{ secrets.DOCKERHUB_PASSWORD }}
         run: |
-          mkdir -p ~/.docker
-          echo '{"auths": {"https://index.docker.io/v1/": {"auth": "'$(echo -n "${DOCKERHUB_USERNAME}:${DOCKERHUB_PASSWORD}" | base64)'"}}}' > ~/.docker/config.json
-          echo "Docker login configuration created."
+          echo "Attempting Docker login"
+          if [ -z "${{ secrets.DOCKERHUB_USERNAME }}" ] || [ -z "${{ secrets.DOCKERHUB_PASSWORD }}" ]; then
+              echo "Error: DockerHub username or password not set."
+              exit 1
+          fi
+          echo "${{ secrets.DOCKERHUB_PASSWORD }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin https://index.docker.io/v1/
 
       # Step 4: Sign the Container Image (using digest instead of tag)
       - name: Sign Container Image
         run: |
+          echo "Signing the image"
           cosign sign --key env://COSIGN_KEY dheeman29/docker-cosign@sha256:${{ env.CONTAINER_SHA256 }} --yes
         env:
           COSIGN_KEY: ${{ secrets.COSIGN_KEY }}
