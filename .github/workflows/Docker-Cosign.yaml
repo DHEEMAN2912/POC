@@ -33,10 +33,10 @@ jobs:
           fi
           echo "SHA256 ID verified successfully."
 
-      # Step 3: Docker Login (Add this step for authentication)
-      - name: Login to Docker Hub
+      # Step 3: Log in to Docker Hub
+      - name: Log in to Docker Hub
         run: |
-          echo "${{ secrets.DOCKERHUB_USERNAME }}" | docker login --username "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
+          echo "${{ secrets.DOCKERHUB_PASSWORD }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
 
       # Step 4: Sign the Container Image (using digest instead of tag)
       - name: Sign Container Image
