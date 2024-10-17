@@ -7,14 +7,14 @@ jobs:
   docker-agent:    
     runs-on: ubuntu-latest    
     container:      
-      image: dheeman29/docker:v1
+      image: dheeman29/docker-cosign:v1
 
     steps:      
       # Step 1: Capture SHA256 ID of the Image
       - name: Capture SHA256 ID of the Image
         run: |
           # Capture the SHA256 from RepoDigests only if it's available
-          REPO_DIGESTS=$(docker inspect --format='{{.RepoDigests}}' dheeman29/docker:v1)
+          REPO_DIGESTS=$(docker inspect --format='{{.RepoDigests}}' dheeman29/docker-cosign:v1)
           if [ "$REPO_DIGESTS" == "[]" ]; then
               echo "Error: RepoDigests is empty. Cannot retrieve SHA256."
               exit 1
