@@ -39,7 +39,15 @@ jobs:
         run: |
           echo "$DOCKERHUB_PASSWORD" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
 
-      # Step 4: Sign the Container Image (using digest instead of tag)
+      # Step 4: Install Trivy
+      - name: Install Trivy
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install wget -y
+          wget https://github.com/aquasecurity/trivy/releases/latest/download/trivy_0.44.0_Linux-64bit.deb
+          sudo dpkg -i trivy_0.44.0_Linux-64bit.deb
+
+      # Step 5: Sign the Container Image (using digest instead of tag)
       - name: Sign Container Image
         env:
           COSIGN_KEY: ${{ secrets.COSIGN_KEY }}
@@ -47,7 +55,7 @@ jobs:
         run: |
           cosign sign --key env://COSIGN_KEY dheeman29/docker-cosign@sha256:${{ env.CONTAINER_SHA256 }} --yes
 
-      # Step 5: Public Key Creation
+      # Step 6: Public Key Creation
       - name: Public Key Creation
         env:
           COSIGN_KEY: ${{ secrets.COSIGN_KEY }}
@@ -55,28 +63,26 @@ jobs:
         run: |
           cosign public-key --key env://COSIGN_KEY > cosign.pub
 
-      # Step 6: Verify Image Signature (Key-based)
+      # Step 7: Verify Image Signature (Key-based)
       - name: Verify Image Signature (Key-based)
         env:
           COSIGN_EXPERIMENTAL: "true"
         run: |
           cosign verify --key cosign.pub dheeman29/docker-cosign@sha256:${{ env.CONTAINER_SHA256 }}
 
-      # Step 7: Scan Image with Trivy for High and Critical Vulnerabilities
+      # Step 8: Scan Image with Trivy for High and Critical Vulnerabilities
       - name: Scan Image with Trivy
         run: |
           trivy image --severity HIGH,CRITICAL --exit-code 0 --format json --output trivy_report.json dheeman29/docker-cosign@sha256:${{ env.CONTAINER_SHA256 }}
-        env:
-          TRIVY_EXIT_CODE: "1" # Fail pipeline if vulnerabilities are found
 
-      # Step 8: Upload Trivy Scan Results
+      # Step 9: Upload Trivy Scan Results
       - name: Upload Trivy Report
         uses: actions/upload-artifact@v3
         with:
           name: trivy-report
           path: trivy_report.json
 
-      # Step 9: Print Hello World from the Container
+      # Step 10: Print Hello World from the Container
       - name: Hello World        
         run: |
           echo "Hello World from container agent!"
