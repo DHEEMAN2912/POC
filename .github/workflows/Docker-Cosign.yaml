@@ -32,14 +32,15 @@ jobs:
           fi
           echo "SHA256 ID verified successfully."
 
-      # Step 3: Log in to Docker Hub
+      # Step 3: Log in to Docker Hub using Config
       - name: Log in to Docker Hub
         env:
           DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
           DOCKERHUB_PASSWORD: ${{ secrets.DOCKERHUB_PASSWORD }}
         run: |
-          echo "Attempting Docker login"
-          echo "$DOCKERHUB_PASSWORD" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin https://index.docker.io/v1/
+          mkdir -p ~/.docker
+          echo '{"auths": {"https://index.docker.io/v1/": {"auth": "'$(echo -n "${DOCKERHUB_USERNAME}:${DOCKERHUB_PASSWORD}" | base64)'"}}}' > ~/.docker/config.json
+          echo "Docker login configuration created."
 
       # Step 4: Sign the Container Image (using digest instead of tag)
       - name: Sign Container Image
