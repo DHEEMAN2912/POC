@@ -33,16 +33,6 @@ jobs:
           fi
           echo "SHA256 ID verified successfully."
 
-      # Step 3: Log in to Docker Hub
-      - name: Log in to Docker Hub
-        run: |
-          echo "Attempting Docker login"
-          if [ -z "${{ secrets.DOCKERHUB_USERNAME }}" ] || [ -z "${{ secrets.DOCKERHUB_PASSWORD }}" ]; then
-              echo "Error: DockerHub username or password not set."
-              exit 1
-          fi
-          echo "${{ secrets.DOCKERHUB_PASSWORD }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin https://index.docker.io/v1/
-
       # Step 4: Sign the Container Image (using digest instead of tag)
       - name: Sign Container Image
         run: |
