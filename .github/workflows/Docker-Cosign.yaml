@@ -1,4 +1,4 @@
-name: Docker Container as Agentf
+name: Docker Container as Agent
 on: 
   push: 
     branches: 
@@ -34,15 +34,7 @@ jobs:
           fi
           echo "SHA256 ID verified successfully."
 
-      # Step 3: Install curl and cosign
-      - name: Install Cosign CLI
-        run: |
-          apt-get update && apt-get install -y curl
-          curl -sSL -o /usr/local/bin/cosign https://github.com/sigstore/cosign/releases/download/v2.2.3/cosign-linux-amd64
-          chmod +x /usr/local/bin/cosign
-          cosign version
-
-      # Step 4: Sign the Container Image
+      # Step 3: Sign the Container Image
       - name: Sign Container Image
         run: |
           cosign sign --key env://COSIGN_KEY dheeman29/docker-cosign:v1 --yes
@@ -50,7 +42,7 @@ jobs:
           COSIGN_KEY: ${{ secrets.COSIGN_KEY }}
           COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSPHRASE }}
 
-      # Step 5: Public Key Creation
+      # Step 4: Public Key Creation
       - name: Public Key Creation
         run: |
           cosign public-key --key env://COSIGN_KEY > cosign.pub
@@ -58,14 +50,14 @@ jobs:
           COSIGN_KEY: ${{ secrets.COSIGN_KEY }}
           COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSPHRASE }}
 
-      # Step 6: Verify Image Signature (Keyless)
+      # Step 5: Verify Image Signature (Keyless)
       - name: Verify Image Signature (Keyless)
         run: |
           cosign verify dheeman29/docker-cosign:v1
         env:
           COSIGN_EXPERIMENTAL: "true"
 
-      # Step 7: Print Hello World from the Container
+      # Step 6: Print Hello World from the Container
       - name: Hello World        
         run: |
           echo "Hello World from container agent!"
