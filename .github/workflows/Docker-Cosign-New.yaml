@@ -7,7 +7,7 @@ jobs:
   docker-agent:    
     runs-on: ubuntu-latest    
     container:      
-      image: ${{ secrets.IMAGE_REGISTRY }}/${{ secrets.IMAGE_NAME }}@sha256:${{ secrets.EXPECTED_SHA256 }}  # Using the SHA256 ID as a secret
+      image: dheeman29/docker-cosign@sha256:${{ secrets.EXPECTED_SHA256 }}  # Using the SHA256 ID as a secret
     permissions:
       contents: read
       security-events: write
@@ -16,7 +16,7 @@ jobs:
       - name: Verify Container SHA256 ID        
         run: |          
           EXPECTED_SHA256="${{ secrets.EXPECTED_SHA256 }}"
-          ACTUAL_SHA256=$(docker inspect --format='{{index .RepoDigests 0}}' ${{ secrets.IMAGE_REGISTRY }}/${{ secrets.IMAGE_NAME }}@sha256:$EXPECTED_SHA256 | sed 's/.*@sha256://')
+          ACTUAL_SHA256=$(docker inspect --format='{{index .RepoDigests 0}}' dheeman29/docker-cosign@sha256:$EXPECTED_SHA256 | sed 's/.*@sha256://')
 
           if [ "$EXPECTED_SHA256" != "$ACTUAL_SHA256" ]; then
               echo "SHA256 mismatch. Aborting."
@@ -37,7 +37,7 @@ jobs:
       - name: Run Trivy Vulnerability Scanner
         uses: aquasecurity/trivy-action@7b7aa264d83dc58691451798b4d117d53d21edfe
         with:
-          image-ref: '${{ secrets.IMAGE_REGISTRY }}/${{ secrets.IMAGE_NAME }}@sha256:${{ secrets.EXPECTED_SHA256 }}'
+          image-ref: 'dheeman29/docker-cosign@sha256:${{ secrets.EXPECTED_SHA256 }}'
           format: 'sarif'  # Output in SARIF format
           output: 'trivy-results.sarif'  # Updated output file name
           severity: 'CRITICAL,HIGH'
@@ -53,7 +53,7 @@ jobs:
       # Step 5: Verify Image Signature (Key-based)
       - name: Verify Image Signature (Key-based)
         run: |
-          cosign verify --key cosign.pub ${{ secrets.IMAGE_REGISTRY }}/${{ secrets.IMAGE_NAME }}@sha256:${{ secrets.EXPECTED_SHA256 }}
+          cosign verify --key cosign.pub dheeman29/docker-cosign@sha256:${{ secrets.EXPECTED_SHA256 }}
         env:
           COSIGN_EXPERIMENTAL: "true"
 
