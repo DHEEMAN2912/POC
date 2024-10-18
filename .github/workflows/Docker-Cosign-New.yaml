@@ -1,6 +1,6 @@
 name: Docker Container as Agent
 on:
-  push:
+  push:  # This defines the event trigger for the workflow
     branches:
       - main
 jobs:
