@@ -12,11 +12,11 @@ jobs:
       contents: read
       security-events: write
     steps:      
-      # Step 1: Verify Container SHA256 ID (this step now just verifies)
+      # Step 1: Verify Container SHA256 ID
       - name: Verify Container SHA256 ID        
         run: |          
           EXPECTED_SHA256="${{ secrets.EXPECTED_SHA256 }}"
-          ACTUAL_SHA256=$(docker inspect --format='{{index .RepoDigests 0}}' dheeman29/docker-cosign@sha256:$EXPECTED_SHA256 | sed 's/.*@sha256://')
+          ACTUAL_SHA256=$(docker inspect --format='{{index .RepoDigests 0}}' dheeman29/docker-cosign | sed 's/.*@sha256://')
 
           if [ "$EXPECTED_SHA256" != "$ACTUAL_SHA256" ]; then
               echo "SHA256 mismatch. Aborting."
