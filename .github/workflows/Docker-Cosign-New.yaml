@@ -38,7 +38,7 @@ jobs:
           echo "Attempting Docker login"
           echo "$DOCKERHUB_PASSWORD" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
 
-      # Step to run the remaining steps inside the container
+      # Step to run remaining steps inside the container
       - name: Run Steps Inside Container
         container:
           image: dheeman29/docker-cosign@sha256:$EXPECTED_SHA256  # Use the SHA256 for the container
