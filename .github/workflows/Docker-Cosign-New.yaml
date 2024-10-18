@@ -7,7 +7,7 @@ jobs:
   docker-agent:
     runs-on: ubuntu-latest
     container:
-      image: dheeman29/docker-cosign@sha256:${{ secrets.EXPECTED_SHA256 }}
+      image: dheeman29/docker-cosign@sha256:$EXPECTED_SHA256
     permissions:
       contents: read
       security-events: write
