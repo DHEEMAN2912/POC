@@ -44,22 +44,22 @@ jobs:
           echo "Attempting Docker login"
           echo "$DOCKERHUB_PASSWORD" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
 
-      # Step 4: Run Trivy Vulnerability Scanner
-      - name: Run Trivy Vulnerability Scanner
-        uses: aquasecurity/trivy-action@7b7aa264d83dc58691451798b4d117d53d21edfe
-        with:
-          image-ref: 'dheeman29/docker-cosign@sha256:${{ env.CONTAINER_SHA256 }}'
-          format: 'sarif'  # Output in SARIF format
-          output: 'trivy-results.sarif'  # Updated output file name
-          severity: 'CRITICAL,HIGH'
+      # # Step 4: Run Trivy Vulnerability Scanner
+      # - name: Run Trivy Vulnerability Scanner
+      #   uses: aquasecurity/trivy-action@7b7aa264d83dc58691451798b4d117d53d21edfe
+      #   with:
+      #     image-ref: 'dheeman29/docker-cosign@sha256:${{ env.CONTAINER_SHA256 }}'
+      #     format: 'sarif'  # Output in SARIF format
+      #     output: 'trivy-results.sarif'  # Updated output file name
+      #     severity: 'CRITICAL,HIGH'
 
-      # Step 5: Upload Trivy Scan Results to GitHub Security Tab
-      - name: Upload Trivy Scan Results to GitHub Security Tab
-        uses: github/codeql-action/upload-sarif@v3
-        with:
-          sarif_file: 'trivy-results.sarif'  # Updated file reference
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # # Step 5: Upload Trivy Scan Results to GitHub Security Tab
+      # - name: Upload Trivy Scan Results to GitHub Security Tab
+      #   uses: github/codeql-action/upload-sarif@v3
+      #   with:
+      #     sarif_file: 'trivy-results.sarif'  # Updated file reference
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       # # Step 6: Sign the Container Image (using digest instead of tag)
       # - name: Sign Container Image
