@@ -1,4 +1,4 @@
-name: Docker Container as Agentt
+name: Docker Container as Agent
 on: 
   push: 
     branches: 
