@@ -7,14 +7,15 @@ on:
 
 jobs:  
   docker-agent:    
-    runs-on: ubuntu-latest    
+    runs-on: ubuntu-latest
+    env:  # Move env up here to make it available to the whole job
+      CONTAINER_SHA256: ${{ secrets.CONTAINER_SHA256 }}  # Set the environment variable for the job
+
     container:      
-      image: dheeman29/docker-cosign@sha256:${{ env.CONTAINER_SHA256 }}
+      image: dheeman29/docker-cosign@sha256:${{ env.CONTAINER_SHA256 }}  # Use the environment variable here
     permissions:
       contents: read
       security-events: write
-    env:
-      CONTAINER_SHA256: ${{ secrets.CONTAINER_SHA256 }}  # Defining the environment variable here
     steps:      
       # Step 1: Capture SHA256 ID of the Image
       - name: Capture SHA256 ID of the Image
