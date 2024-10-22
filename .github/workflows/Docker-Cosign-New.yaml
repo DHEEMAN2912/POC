@@ -51,6 +51,7 @@ jobs:
       - name: Decrypt and Convert Private Key
         env:
           COSIGN_KEY: ${{ secrets.COSIGN_KEY }}
+          COSIGN_PASSPHRASE: ${{ secrets.COSIGN_PASSPHRASE }}
         run: |
           echo "${{ secrets.COSIGN_KEY }}" > encrypted_key.pem
           openssl pkcs8 -inform PEM -outform PEM -in encrypted_key.pem -out decrypted_key.pem -passin env:COSIGN_PASSPHRASE
