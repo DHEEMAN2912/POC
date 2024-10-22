@@ -77,7 +77,7 @@ jobs:
           COSIGN_PASSPHRASE: ${{ secrets.COSIGN_PASSPHRASE }}  # If needed, otherwise you can omit this
         run: |
           echo "Creating public key"
-          cosign public-key --key env://COSIGN_KEY --password env://COSIGN_PASSPHRASE > cosign.pub
+          cosign public-key --key env://COSIGN_KEY env://COSIGN_PASSPHRASE > cosign.pub
 
       # Step 8: Verify Image Signature (Key-based)
       - name: Verify Image Signature (Key-based)
