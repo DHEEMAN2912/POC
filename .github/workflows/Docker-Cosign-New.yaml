@@ -1,6 +1,6 @@
 name: Docker Container as Agent
 
-on: 
+on:
   push:
     branches:
       - main
@@ -47,13 +47,13 @@ jobs:
           echo "Attempting Docker login"
           echo "$DOCKERHUB_PASSWORD" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
 
-      # Step 4: Decrypt and convert private key
+      # Step 4: Decrypt and Convert Private Key
       - name: Decrypt and Convert Private Key
         env:
           COSIGN_KEY: ${{ secrets.COSIGN_KEY }}
         run: |
           echo "${{ secrets.COSIGN_KEY }}" > encrypted_key.pem
-          openssl pkcs8 -in encrypted_key.pem -out decrypted_key.pem
+          openssl pkcs8 -inform PEM -outform PEM -in encrypted_key.pem -out decrypted_key.pem -passin env:COSIGN_PASSPHRASE
           openssl pkcs8 -topk8 -inform PEM -outform PEM -in decrypted_key.pem -out key.pem -nocrypt
 
       # Step 5: Public Key Creation
@@ -62,7 +62,7 @@ jobs:
           COSIGN_KEY: ${{ secrets.COSIGN_KEY }}
           COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSPHRASE }}
         run: |
-          cosign public-key --key env://COSIGN_KEY > cosign.pub
+          cosign public-key --key key.pem > cosign.pub
 
       # Step 6: Verify Image Signature (Key-based)
       - name: Verify Image Signature (Key-based)
