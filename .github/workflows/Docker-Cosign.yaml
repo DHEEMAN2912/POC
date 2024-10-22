@@ -81,7 +81,7 @@ jobs:
       # Step 8: Verify Image Signature (Key-based)
       - name: Verify Image Signature (Key-based)
         run: |
-          cosign verify --key cosign.pubdheeman29/new-cosign-image@sha256:${{ env.CONTAINER_SHA256 }}
+          cosign verify --key cosign.pub dheeman29/new-cosign-image@sha256:${{ env.CONTAINER_SHA256 }}
         env:
           COSIGN_EXPERIMENTAL: "true"
 
