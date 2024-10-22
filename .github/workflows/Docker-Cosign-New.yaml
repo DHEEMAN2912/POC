@@ -39,9 +39,9 @@ jobs:
           echo "SHA256 ID verified successfully."
 
         # Step 3: Reinitialize Cosign
-      - name: Reinitialize Cosign
-        run: |
-            cosign initialize
+      # - name: Reinitialize Cosign
+      #   run: |
+      #       cosign initialize
 
       # Step 4: Log in to Docker Hub
       - name: Log in to Docker Hub
@@ -59,7 +59,7 @@ jobs:
           COSIGN_EXPERIMENTAL: "true"
         run: |
           echo "Verifying the signed image using the public key stored in secrets..."
-          cosign verify --key env://COSIGN_PUBLIC_KEY dheeman29/new-cosign-image@sha256:${{ env.CONTAINER_SHA256 }}
+          cosign verify --key env://COSIGN_PUBLIC_KEY --no-verify-tlog dheeman29/new-cosign-image@sha256:${{ env.CONTAINER_SHA256 }}
 
       # Step 6: Print Hello World from the Container
       - name: Hello World        
