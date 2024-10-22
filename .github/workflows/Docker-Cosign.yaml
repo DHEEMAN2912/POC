@@ -103,7 +103,7 @@
 
 
 
-name: Docker Container as Agentt
+name: Docker Container as Agent
 on: 
   push: 
     branches: 
@@ -152,11 +152,17 @@ jobs:
       # Step 4: Decrypt the Private Key
       - name: Decrypt the Private Key
         env:
-          COSIGN_KEY: ${{ secrets.COSIGN_KEY }}  # Your encrypted private key
+          COSIGN_KEY: ${{ secrets.COSIGN_KEY }}  # Your Base64-encoded encrypted private key
           COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSPHRASE }}  # Passphrase for the encrypted key
         run: |
           echo "$COSIGN_KEY" | base64 --decode > cosign.key
-          openssl pkcs8 -in cosign.key -out decrypted_key.pem -nocrypt
+          # Check if the key was decoded correctly
+          if grep -q "BEGIN ENCRYPTED SIGSTORE PRIVATE KEY" cosign.key; then
+              openssl pkcs8 -in cosign.key -out decrypted_key.pem -nocrypt -passin pass:"$COSIGN_PASSWORD"
+          else
+              echo "Decryption error: Invalid key format."
+              exit 1
+          fi
 
       # Step 5: Import the Decrypted Key into Cosign
       - name: Import Decrypted Key
