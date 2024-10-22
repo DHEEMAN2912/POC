@@ -7,7 +7,7 @@ jobs:
   docker-agent:    
     runs-on: ubuntu-latest    
     container:      
-      image: dheeman29/docker-cosign:v1
+      image: dheeman29/new-cosign-image:v1
     permissions:
       contents: read
       security-events: write
@@ -15,12 +15,12 @@ jobs:
       # Step 1: Capture SHA256 ID of the Image
       - name: Capture SHA256 ID of the Image
         run: |          
-          REPO_DIGESTS=$(docker inspect --format='{{.RepoDigests}}' dheeman29/docker-cosign:v1) 
+          REPO_DIGESTS=$(docker inspect --format='{{.RepoDigests}}' dheeman29/new-cosign-image:v1) 
           if [ "$REPO_DIGESTS" == "[]" ]; then
               echo "Error: RepoDigests is empty. Cannot retrieve SHA256."
               exit 1
           fi
-          CONTAINER_SHA256=$(docker inspect --format='{{index .RepoDigests 0}}' dheeman29/docker-cosign:v1 | sed 's/.*@sha256://')
+          CONTAINER_SHA256=$(docker inspect --format='{{index .RepoDigests 0}}' dheeman29/new-cosign-image:v1 | sed 's/.*@sha256://')
           echo "CONTAINER_SHA256=$CONTAINER_SHA256" >> $GITHUB_ENV
 
       # Step 2: Verify Container SHA256 ID
@@ -68,7 +68,7 @@ jobs:
       #     COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSPHRASE }}
       #   run: |
       #     echo "Signing the image"
-      #     cosign sign --key env://COSIGN_KEY dheeman29/docker-cosign@sha256:${{ env.CONTAINER_SHA256 }} --yes
+      #     cosign sign --key env://COSIGN_KEYdheeman29/new-cosign-image@sha256:${{ env.CONTAINER_SHA256 }} --yes
 
       # Step 7: Public Key Creation
       - name: Public Key Creation
@@ -81,7 +81,7 @@ jobs:
       # Step 8: Verify Image Signature (Key-based)
       - name: Verify Image Signature (Key-based)
         run: |
-          cosign verify --key cosign.pub dheeman29/docker-cosign@sha256:${{ env.CONTAINER_SHA256 }}
+          cosign verify --key cosign.pubdheeman29/new-cosign-image@sha256:${{ env.CONTAINER_SHA256 }}
         env:
           COSIGN_EXPERIMENTAL: "true"
 
