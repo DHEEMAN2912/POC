@@ -1,67 +1,67 @@
-# name: Docker Container as Agent
-on: 
-  push: 
-    branches: 
-      - main
+# # name: Docker Container as Agent
+# on: 
+#   push: 
+#     branches: 
+#       - main
 
-jobs:  
-  docker-agent:    
-    runs-on: ubuntu-latest    
-    container:      
-      image: dheeman29/new-cosign-image:v1
+# jobs:  
+#   docker-agent:    
+#     runs-on: ubuntu-latest    
+#     container:      
+#       image: dheeman29/new-cosign-image:v1
 
-    permissions:
-      contents: read
-      security-events: write
+#     permissions:
+#       contents: read
+#       security-events: write
 
-    steps:      
-      # Step 1: Capture SHA256 ID of the Image
-      - name: Capture SHA256 ID of the Image
-        run: |          
-          REPO_DIGESTS=$(docker inspect --format='{{.RepoDigests}}' dheeman29/new-cosign-image:v1) 
-          if [ "$REPO_DIGESTS" == "[]" ]; then
-              echo "Error: RepoDigests is empty. Cannot retrieve SHA256."
-              exit 1
-          fi
-          CONTAINER_SHA256=$(docker inspect --format='{{index .RepoDigests 0}}' dheeman29/new-cosign-image:v1 | sed 's/.*@sha256://')
-          echo "CONTAINER_SHA256=$CONTAINER_SHA256" >> $GITHUB_ENV
+#     steps:      
+#       # Step 1: Capture SHA256 ID of the Image
+#       - name: Capture SHA256 ID of the Image
+#         run: |          
+#           REPO_DIGESTS=$(docker inspect --format='{{.RepoDigests}}' dheeman29/new-cosign-image:v1) 
+#           if [ "$REPO_DIGESTS" == "[]" ]; then
+#               echo "Error: RepoDigests is empty. Cannot retrieve SHA256."
+#               exit 1
+#           fi
+#           CONTAINER_SHA256=$(docker inspect --format='{{index .RepoDigests 0}}' dheeman29/new-cosign-image:v1 | sed 's/.*@sha256://')
+#           echo "CONTAINER_SHA256=$CONTAINER_SHA256" >> $GITHUB_ENV
 
-      # Step 2: Verify Container SHA256 ID
-      - name: Verify Container SHA256 ID        
-        run: |          
-          EXPECTED_SHA256="${{ secrets.EXPECTED_SHA256 }}"
-          ACTUAL_SHA256="${{ env.CONTAINER_SHA256 }}"
+#       # Step 2: Verify Container SHA256 ID
+#       - name: Verify Container SHA256 ID        
+#         run: |          
+#           EXPECTED_SHA256="${{ secrets.EXPECTED_SHA256 }}"
+#           ACTUAL_SHA256="${{ env.CONTAINER_SHA256 }}"
           
-          if [ "$EXPECTED_SHA256" != "$ACTUAL_SHA256" ]; then
-              echo "SHA256 mismatch. Aborting."
-              exit 1
-          fi
-          echo "SHA256 ID verified successfully."
+#           if [ "$EXPECTED_SHA256" != "$ACTUAL_SHA256" ]; then
+#               echo "SHA256 mismatch. Aborting."
+#               exit 1
+#           fi
+#           echo "SHA256 ID verified successfully."
 
-        # Step 3: Reinitialize Cosign
-      # - name: Reinitialize Cosign
-      #   run: |
-      #       cosign initialize
+#         # Step 3: Reinitialize Cosign
+#       # - name: Reinitialize Cosign
+#       #   run: |
+#       #       cosign initialize
 
-      # Step 4: Log in to Docker Hub
-      - name: Log in to Docker Hub
-        env:
-          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
-          DOCKERHUB_PASSWORD: ${{ secrets.DOCKERHUB_PASSWORD }}
-        run: |
-          echo "Attempting Docker login"
-          echo "$DOCKERHUB_PASSWORD" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
+#       # Step 4: Log in to Docker Hub
+#       - name: Log in to Docker Hub
+#         env:
+#           DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+#           DOCKERHUB_PASSWORD: ${{ secrets.DOCKERHUB_PASSWORD }}
+#         run: |
+#           echo "Attempting Docker login"
+#           echo "$DOCKERHUB_PASSWORD" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
 
-      # Step 5: Verify Image Signature Using Public Key Stored in Secret
-      - name: Verify Image Signature (Key-based)
-        env:
-          COSIGN_PUBLIC_KEY: ${{ secrets.COSIGN_PUBLIC_KEY }}
-          COSIGN_EXPERIMENTAL: "true"
-        run: |
-          echo "Verifying the signed image using the public key stored in secrets..."
-          cosign verify --key env://COSIGN_PUBLIC_KEY --no-verify-tlog dheeman29/new-cosign-image@sha256:${{ env.CONTAINER_SHA256 }}
+#       # Step 5: Verify Image Signature Using Public Key Stored in Secret
+#       - name: Verify Image Signature (Key-based)
+#         env:
+#           COSIGN_PUBLIC_KEY: ${{ secrets.COSIGN_PUBLIC_KEY }}
+#           COSIGN_EXPERIMENTAL: "true"
+#         run: |
+#           echo "Verifying the signed image using the public key stored in secrets..."
+#           cosign verify --key env://COSIGN_PUBLIC_KEY --no-verify-tlog dheeman29/new-cosign-image@sha256:${{ env.CONTAINER_SHA256 }}
 
-      # Step 6: Print Hello World from the Container
-      - name: Hello World        
-        run: |
-          echo "Hello World from container agent!"
+#       # Step 6: Print Hello World from the Container
+#       - name: Hello World        
+#         run: |
+#           echo "Hello World from container agent!"
