@@ -61,14 +61,14 @@ jobs:
       #   env:
       #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      # # Step 6: Sign the Container Image (using digest instead of tag)
-      # - name: Sign Container Image
-      #   env:
-      #     COSIGN_KEY: ${{ secrets.COSIGN_KEY }}
-      #     COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSPHRASE }}
-      #   run: |
-      #     echo "Signing the image"
-      #     cosign sign --key env://COSIGN_KEYdheeman29/new-cosign-image@sha256:${{ env.CONTAINER_SHA256 }} --yes
+      # Step 6: Sign the Container Image (using digest instead of tag)
+      - name: Sign Container Image
+        env:
+          COSIGN_KEY: ${{ secrets.COSIGN_KEY }}
+          COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSPHRASE }}
+        run: |
+          echo "Signing the image"
+          cosign sign --key env://COSIGN_KEY dheeman29/new-cosign-image@sha256:${{ env.CONTAINER_SHA256 }} --yes
 
       # Step 7: Public Key Creation
       - name: Public Key Creation 
